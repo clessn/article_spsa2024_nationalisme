@@ -596,7 +596,7 @@ for (i in generations){
       y = estimate
     )) +
     lemon::facet_rep_wrap( ~ ses_geoloc.1, ncol = 1,
-                           repeat.tick.labels = "x") +
+                           # repeat.tick.labels = "x") +
     geom_vline(data = events_dfi,
                aes(xintercept = year),
                linetype = "dotted") +
