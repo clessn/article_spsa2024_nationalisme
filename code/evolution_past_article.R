@@ -6,9 +6,6 @@ library(tidyverse)
 # Data --------------------------------------------------------------------
 Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
   mutate(yob = year - ses_age,
-         ses_geoloc.1 = as.character(ses_geoloc.1),
-         ses_geoloc.1 = ifelse(ses_geoloc.1 == "quebec", "region", ses_geoloc.1),
-         ses_geoloc.1 = factor(ses_geoloc.1),
          generation = case_when(
            yob <= 1945 ~ "preboomer",
            yob %in% 1946:1960 ~ "boomer",
@@ -110,35 +107,61 @@ for (i in 1:length(years_to_keep)){
 
 
 ### after this loop, the object linear_models contains all the models
-summary(linear_models[[1974]])
-summary(linear_models[[2022]])
+summary(linear_models[["1974"]])
+summary(linear_models[["2022"]])
 
 
 # Predict models ------------------------------------------------------------------
 
+## fix the available generations for each year
+available_generations <- list(
+  "1974" = c("preboomer", "boomer"),
+  "1979" = c("preboomer", "boomer"),
+  "1984" = c("preboomer", "boomer", "x"),
+  "1988" = c("preboomer", "boomer", "x"),
+  "1993" = c("preboomer", "boomer", "x"),
+  "2004" = c("preboomer", "boomer", "x", "y"),
+  "2008" = c("preboomer", "boomer", "x", "y"),
+  "2015" = c("preboomer", "boomer", "x", "y", "z"),
+  "2019" = c("preboomer", "boomer", "x", "y", "z"),
+  "2021" = c("preboomer", "boomer", "x", "y", "z"),
+  "2022" = c("preboomer", "boomer", "x", "y", "z"),
+  "2023" = c("preboomer", "boomer", "x", "y", "z")
+)
+
+available_generations[["1974"]]
+available_generations[["1993"]]
+
+### Faire une loop par année pour avoir le jeu de données du graphique
 for (i in 1:length(linear_models)){
   yeari <- names(linear_models)[i]
   newdata <- marginaleffects::datagrid(model = linear_models[[i]],
                                        generation = available_generations[[yeari]],
-                                       int_pol = 0:1,
-                                       ses_geoloc.1 = c("montreal", "region", "suburbs")) %>% 
-    mutate(int_pol = as.numeric(as.character(int_pol)))
+                                       ses_geoloc.1 = c("montreal", "quebec", "region", "suburbs"))
   predsi <- marginaleffects::predictions(linear_models[[i]],
                                          newdata = newdata) %>% 
     mutate(year = yeari)
   if (i == 1){
-    predslinear <- predsi 
+    GraphData <- predsi 
   } else {
-    predslinear <- bind_rows(predslinear, predsi)
+    GraphData <- bind_rows(GraphData, predsi)
   }
   message(yeari)
 }
 
 predslinear$year <- as.numeric(predslinear$year)
 
-### predslinear contains the main data for the graph!
+### GraphData contains the main data for the graph!
 
 # Graph -------------------------------------------------------------------
+
+## squelette
+GraphData %>%
+  filter(generation == "boomer" &
+           year != 2023) %>%
+  ggplot(aes(x = year, y = estimate)) +
+  geom_point() +
+  facet_wrap(~ses_geoloc.1)
 
 ## 1. Generate auxiliary data ----------------------------------------------
 
