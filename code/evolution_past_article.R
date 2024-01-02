@@ -2,16 +2,17 @@
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
+library(patchwork)
 
 # Data --------------------------------------------------------------------
 Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
   mutate(yob = year - ses_age,
          generation = case_when(
-           yob <= 1945 ~ "preboomer",
-           yob %in% 1946:1960 ~ "boomer",
-           yob %in% 1961:1979 ~ "x",
-           yob %in% 1980:1995 ~ "y",
-           yob >= 1996 ~ "z"
+           yob <= 1947 ~ "preboomer",
+           yob %in% 1947:1961 ~ "boomer",
+           yob %in% 1962:1976 ~ "x",
+           yob %in% 1977:1991 ~ "y",
+           yob %in% 1992:2003 ~ "z"
          ),
          generation = factor(generation))
 
@@ -149,7 +150,7 @@ for (i in 1:length(linear_models)){
   message(yeari)
 }
 
-predslinear$year <- as.numeric(predslinear$year)
+GraphData$year <- as.numeric(GraphData$year)
 
 ### GraphData contains the main data for the graph!
 
@@ -209,4 +210,82 @@ generations_yob <- list(
 ## 1. start by only doing it for 1 genration (example: boomer)
 
 ## Boomer ------------------------------------------------------------------
+
+## squelette Graph1
+plot1 <- GraphData %>%
+  filter(generation == "boomer" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "Year",
+    y = "Predicted position on independantist scale",
+    linetype = "Geoloc",
+    color = "Geoloc"
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "montreal" = "solid", 
+      "quebec" = "dashed", 
+      "suburbs" = "solid", 
+      "region" = "dotted"
+    ),
+    guide = guide_legend(title = "Geoloc")
+  ) +
+  scale_color_manual(
+    values = c(
+      "montreal" = "black", 
+      "quebec" = "black", 
+      "suburbs" = "gray", 
+      "region" = "black"
+    ),
+    guide = guide_legend(title = "Geoloc")
+  ) +
+  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independantist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  
+
+print(plot1)
+
+## squelette Graph2
+plot2 <- GraphData %>%
+  filter(generation == "boomer" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "Year",
+    y = "Predicted position on independantist scale"
+  ) +
+  facet_wrap(~ses_geoloc.1, ncol = 4) +
+  scale_x_continuous(breaks = seq(1975:2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independantist scale\n") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+print(plot2)
+
+## combinaison des graphs
+
+combined_plot <- plot1 + plot2 +
+  plot_layout(nrow = 2, byrow = TRUE) +  # Organise en deux lignes
+  plot_annotation(title = "Boomer", theme = theme(plot.title = element_text(hjust = 0.5)))
+print(combined_plot)
 
