@@ -1,6 +1,7 @@
 # Packages ----------------------------------------------------------------
 library(dplyr)
 library(ggplot2)
+library(tidyverse)
 
 # Data --------------------------------------------------------------------
 Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
@@ -628,3 +629,6 @@ for (i in generations){
   ggsave(plot, filename = paste0("SharedFolder_spsa_article_nationalisme/graph/models/evolution/facet_", i, ".png"),
          width = 7, height = 8)
 }
+
+
+##Graph intégré pour mieux visualiser l'effet des régions
