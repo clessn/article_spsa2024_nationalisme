@@ -133,7 +133,7 @@ available_generations <- list(
 available_generations[["1974"]]
 available_generations[["1993"]]
 
-### Faire une loop par année pour avoir le jeu de données du graphique
+### Faire une loop par année pour avoir le jeu de données du graphsique
 for (i in 1:length(linear_models)){
   yeari <- names(linear_models)[i]
   newdata <- marginaleffects::datagrid(model = linear_models[[i]],
@@ -143,21 +143,21 @@ for (i in 1:length(linear_models)){
                                          newdata = newdata) %>% 
     mutate(year = yeari)
   if (i == 1){
-    GraphData <- predsi 
+    graphsData <- predsi 
   } else {
-    GraphData <- bind_rows(GraphData, predsi)
+    graphsData <- bind_rows(graphsData, predsi)
   }
   message(yeari)
 }
 
-GraphData$year <- as.numeric(GraphData$year)
+graphsData$year <- as.numeric(graphsData$year)
 
-### GraphData contains the main data for the graph!
+### graphsData contains the main data for the graphs!
 
-# Graph -------------------------------------------------------------------
+# graphs -------------------------------------------------------------------
 
 ## squelette
-GraphData %>%
+graphsData %>%
   filter(generation == "boomer" &
            year != 2023) %>%
   ggplot(aes(x = year, y = estimate)) +
@@ -211,16 +211,16 @@ generations_yob <- list(
 
 ## Boomer ------------------------------------------------------------------
 
-## squelette Graph1
-plot1 <- GraphData %>%
+## squelette graphs1
+plot1 <- graphsData %>%
   filter(generation == "boomer" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
   ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
-  geom_line(size = 1) +
-  geom_point(size = 2, color = "black") +
+  geom_line(size = 0.5) +
+  geom_point(size = 1, color = "black") +
   theme_minimal() +
   labs(
     x = "",
@@ -236,7 +236,7 @@ plot1 <- GraphData %>%
       "region" = "dotted"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_color_manual(
     values = c(
@@ -246,11 +246,11 @@ plot1 <- GraphData %>%
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.05, 0.5, 1.05),
+                     breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -258,8 +258,8 @@ plot1 <- GraphData %>%
 print(plot1)
 
 
-## squelette Graph2
-plot2 <- GraphData %>%
+## squelette graphs2
+plot2 <- graphsData %>%
   filter(generation == "boomer" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
@@ -269,6 +269,7 @@ plot2 <- GraphData %>%
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
   geom_line(size = 1) +
   geom_point(size = 2, color = "black") +
+  geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
   theme_minimal() +
   labs(
     x = "",
@@ -281,7 +282,7 @@ plot2 <- GraphData %>%
       "montreal" = "Montreal", 
       "quebec" = "Quebec", 
       "region" = "Regions", 
-      "suburbs" = "Suburbs"
+      "suburbs" = "Greater Montreal Area"
     ))
   ) +
   scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
@@ -293,29 +294,32 @@ plot2 <- GraphData %>%
 
 print(plot2)
 
-## combinaison des graphs
+## combinaison des graphss
 
 combined_plot <- plot1 / plot2 +
-  plot_annotation(title = "Boomer", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_annotation(title = "Boomer",
+                  caption = "Prediction, all else being equal, for a Francophone man of the boomer generation",
+                  theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
 print(combined_plot)
 
 
-ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_boomer.png", 
-       plot = combined_plot, width = 7, height = 8)
+ggsave(plot = combined_plot,
+       filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_boomer.png", 
+       width = 12, height = 8)
 
 ## preboomer ------------------------------------------------------------------
 
-## squelette Graph1
-plot1 <- GraphData %>%
+## squelette graphs1
+plot1 <- graphsData %>%
   filter(generation == "preboomer" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
   ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
-  geom_line(size = 1) +
-  geom_point(size = 2, color = "black") +
+  geom_line(size = 0.5) +
+  geom_point(size = 1, color = "black") +
   theme_minimal() +
   labs(
     x = "",
@@ -331,7 +335,7 @@ plot1 <- GraphData %>%
       "region" = "dotted"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_color_manual(
     values = c(
@@ -341,11 +345,11 @@ plot1 <- GraphData %>%
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.05, 0.5, 1.05),
+                     breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -353,8 +357,8 @@ plot1 <- GraphData %>%
 print(plot1)
 
 
-## squelette Graph2
-plot2 <- GraphData %>%
+## squelette graphs2
+plot2 <- graphsData %>%
   filter(generation == "preboomer" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
@@ -364,6 +368,7 @@ plot2 <- GraphData %>%
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
   geom_line(size = 1) +
   geom_point(size = 2, color = "black") +
+  geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
   theme_minimal() +
   labs(
     x = "",
@@ -376,7 +381,7 @@ plot2 <- GraphData %>%
       "montreal" = "Montreal", 
       "quebec" = "Quebec", 
       "region" = "Regions", 
-      "suburbs" = "Suburbs"
+      "suburbs" = "Greater Montreal Area"
     ))
   ) +
   scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
@@ -388,29 +393,30 @@ plot2 <- GraphData %>%
 
 print(plot2)
 
-## combinaison des graphs
+## combinaison des graphss
 
 combined_plot <- plot1 / plot2 +
-  plot_annotation(title = "Pre-boomer", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_annotation(title = "Preboomer",
+                  caption = "Prediction, all else being equal, for a Francophone man of the preboomer generation",
+                  theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
 print(combined_plot)
 
-
-ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_preboomer.png", 
-       plot = combined_plot, width = 7, height = 8)
+ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_preboomer.png", 
+       plot = combined_plot, width = 12, height = 8)
 
 ## x ------------------------------------------------------------------
 
-## squelette Graph1
-plot1 <- GraphData %>%
+## squelette graphs1
+plot1 <- graphsData %>%
   filter(generation == "x" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
   ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
-  geom_line(size = 1) +
-  geom_point(size = 2, color = "black") +
+  geom_line(size = 0.5) +
+  geom_point(size = 1, color = "black") +
   theme_minimal() +
   labs(
     x = "",
@@ -426,7 +432,7 @@ plot1 <- GraphData %>%
       "region" = "dotted"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_color_manual(
     values = c(
@@ -436,11 +442,11 @@ plot1 <- GraphData %>%
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.05, 0.5, 1.05),
+                     breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -448,8 +454,8 @@ plot1 <- GraphData %>%
 print(plot1)
 
 
-## squelette Graph2
-plot2 <- GraphData %>%
+## squelette graphs2
+plot2 <- graphsData %>%
   filter(generation == "x" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
@@ -459,6 +465,7 @@ plot2 <- GraphData %>%
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
   geom_line(size = 1) +
   geom_point(size = 2, color = "black") +
+  geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
   theme_minimal() +
   labs(
     x = "",
@@ -471,7 +478,7 @@ plot2 <- GraphData %>%
       "montreal" = "Montreal", 
       "quebec" = "Quebec", 
       "region" = "Regions", 
-      "suburbs" = "Suburbs"
+      "suburbs" = "Greater Montreal Area"
     ))
   ) +
   scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
@@ -483,29 +490,31 @@ plot2 <- GraphData %>%
 
 print(plot2)
 
-## combinaison des graphs
+## combinaison des graphss
 
 combined_plot <- plot1 / plot2 +
-  plot_annotation(title = "X Generation", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_annotation(title = "X",
+                  caption = "Prediction, all else being equal, for a Francophone man of the X generation",
+                  theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
 print(combined_plot)
 
 
-ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_x.png", 
-       plot = combined_plot, width = 7, height = 8)
+ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_x.png", 
+       plot = combined_plot, width = 12, height = 8)
 
 ## y ------------------------------------------------------------------
 
-## squelette Graph1
-plot1 <- GraphData %>%
+## squelette graphs1
+plot1 <- graphsData %>%
   filter(generation == "y" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
   ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
-  geom_line(size = 1) +
-  geom_point(size = 2, color = "black") +
+  geom_line(size = 0.5) +
+  geom_point(size = 1, color = "black") +
   theme_minimal() +
   labs(
     x = "",
@@ -521,7 +530,7 @@ plot1 <- GraphData %>%
       "region" = "dotted"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_color_manual(
     values = c(
@@ -531,11 +540,11 @@ plot1 <- GraphData %>%
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.05, 0.5, 1.05),
+                     breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -543,8 +552,8 @@ plot1 <- GraphData %>%
 print(plot1)
 
 
-## squelette Graph2
-plot2 <- GraphData %>%
+## squelette graphs2
+plot2 <- graphsData %>%
   filter(generation == "y" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
@@ -554,6 +563,7 @@ plot2 <- GraphData %>%
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
   geom_line(size = 1) +
   geom_point(size = 2, color = "black") +
+  geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
   theme_minimal() +
   labs(
     x = "",
@@ -566,7 +576,7 @@ plot2 <- GraphData %>%
       "montreal" = "Montreal", 
       "quebec" = "Quebec", 
       "region" = "Regions", 
-      "suburbs" = "Suburbs"
+      "suburbs" = "Greater Montreal Area"
     ))
   ) +
   scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
@@ -578,29 +588,31 @@ plot2 <- GraphData %>%
 
 print(plot2)
 
-## combinaison des graphs
+## combinaison des graphss
 
 combined_plot <- plot1 / plot2 +
-  plot_annotation(title = "Y Generation", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_annotation(title = "Y",
+                  caption = "Prediction, all else being equal, for a Francophone man of the Y generation",
+                  theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
 print(combined_plot)
 
 
-ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_y.png", 
-       plot = combined_plot, width = 7, height = 8)
+ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_y.png", 
+       plot = combined_plot, width = 12, height = 8)
 
 ## z ------------------------------------------------------------------
 
-## squelette Graph1
-plot1 <- GraphData %>%
+## squelette graphs1
+plot1 <- graphsData %>%
   filter(generation == "z" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
   ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
-  geom_line(size = 1) +
-  geom_point(size = 2, color = "black") +
+  geom_line(size = 0.5) +
+  geom_point(size = 1, color = "black") +
   theme_minimal() +
   labs(
     x = "",
@@ -616,7 +628,7 @@ plot1 <- GraphData %>%
       "region" = "dotted"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
   scale_color_manual(
     values = c(
@@ -626,11 +638,11 @@ plot1 <- GraphData %>%
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
-  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+  scale_x_continuous(breaks = seq(from = 2015, to = 2022, by = 3)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.05, 0.5, 1.05),
+                     breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -638,8 +650,8 @@ plot1 <- GraphData %>%
 print(plot1)
 
 
-## squelette Graph2
-plot2 <- GraphData %>%
+## squelette graphs2
+plot2 <- graphsData %>%
   filter(generation == "z" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
@@ -649,6 +661,7 @@ plot2 <- GraphData %>%
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
   geom_line(size = 1) +
   geom_point(size = 2, color = "black") +
+  geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
   theme_minimal() +
   labs(
     x = "",
@@ -661,10 +674,10 @@ plot2 <- GraphData %>%
       "montreal" = "Montreal", 
       "quebec" = "Quebec", 
       "region" = "Regions", 
-      "suburbs" = "Suburbs"
+      "suburbs" = "Greater Montreal Area"
     ))
   ) +
-  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
+  scale_x_continuous(breaks = seq(from=2015, to=2022, by = 3)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
@@ -673,13 +686,18 @@ plot2 <- GraphData %>%
 
 print(plot2)
 
-## combinaison des graphs
+## combinaison des graphss
 
-combined_plot <- plot1 / plot2 +
-  plot_annotation(title = "Z Generation", theme = theme(plot.title = element_text(hjust = 0.5))) +
-  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
-print(combined_plot)
+# Sous-layout pour plot1 avec des espaces de chaque côté
+plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
+
+# Layout combiné
+combined_plot <- plot1_with_spacers / plot2 +
+  plot_annotation(title = "Z",
+                  caption = "Prediction, all else being equal, for a Francophone man of the Z generation",
+                  theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_layout(widths = c(0.1, 10, 0.1), heights = unit(c(7, 0.5), c('cm', 'null')))
 
 
-ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_z.png", 
-       plot = combined_plot, width = 7, height = 8)
+ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_z.png", 
+       plot = combined_plot, width = 12, height = 8)
