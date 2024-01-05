@@ -51,7 +51,8 @@ marginaleffects::predictions(model, by = "generation")
 
 # Predict -----------------------------------------------------------------
 
-Preds <- marginaleffects::predictions(model, newdata = Strat)
+Preds <- marginaleffects::predictions(model, newdata = Strat) %>% 
+  mutate(langue = factor(langue, levels = c("french", "english", "other")))
 
 # Aggregate -------------------------------------------------------------------------
 
@@ -68,18 +69,18 @@ PredsAgg <- Preds %>%
          conf_low = ifelse(conf_low < 0, 0, conf_low),
          conf_high = ifelse(conf_high > 1, 1, conf_high),
          weighted_mean_estimate = ifelse(weighted_mean_estimate < 0, 0, weighted_mean_estimate),
-         weighted_mean_estimate = ifelse(weighted_mean_estimate > 1, 1, weighted_mean_estimate),
-         langue = factor(langue, levels = c("french", "english", "other")))
+         weighted_mean_estimate = ifelse(weighted_mean_estimate > 1, 1, weighted_mean_estimate))
 
 # Graphs ------------------------------------------------------------------
 
 common_theme <- function() {
   list(
     geom_hline(yintercept = 0.5, linetype = "dotted", color = "grey"),
-    geom_point(position = position_dodge2(width = 0.4)),
+    geom_point(position = position_dodge(width = 0.4)),
     geom_linerange(aes(ymin = conf_low, ymax = conf_high), position = position_dodge2(width = 0.4)),
     scale_color_grey(),
-    scale_y_continuous(limits = c(0, 1)),
+    scale_y_continuous(limits = c(0, 1),
+                       expand = c(0,0)),
     ylab("Predicted mean position\non independence scale"),
     clessnverse::theme_clean_light(),
     theme(axis.text.x = element_text(angle = 90, hjust = 1),
@@ -87,7 +88,10 @@ common_theme <- function() {
   )
 }
 
-## aggregate
+
+
+## Aggregate ---------------------------------------------------------------
+
 ggplot(PredsAgg,
        aes(x = region,
            y = weighted_mean_estimate,
@@ -123,5 +127,61 @@ ggsave("SharedFolder_spsa_article_nationalisme/graphs/models/potgrowth/aggregate
 
 
 
+## Disaggregated -----------------------------------------------------------
 
-### Distribution estimée (en utilisant les marges d'erreur)
+Preds %>% 
+  ggplot(aes(x = region, y = estimate)) +
+  facet_grid(rows = vars(langue),
+             cols = vars(generation)) +
+  geom_point(aes(size = prct_region,
+                 alpha = prct_region)) +
+  clessnverse::theme_clean_light()
+
+
+# Distributions estimées --------------------------------------------------
+
+for (i in 1:nrow(Preds)){
+  mean <- Preds$estimate[i]
+  sd <- Preds$std.error[i]
+  n <- Preds$n[i]
+  if (n != 0){
+    souvi <- rnorm(mean = mean, sd = sd, n = n)
+    souvi[souvi < 0] <- 0
+    souvi[souvi > 1] <- 1
+    Simi <- data.frame(
+      id = i,
+      pred_souv = souvi,
+      generation = Preds$generation[i],
+      region = Preds$region[i],
+      langue = Preds$langue[i],
+      origin = Preds$origin[i],
+      income = Preds$income[i],
+      gender = Preds$gender[i]
+    )
+    if (i == 1){
+      Sims <- list()
+      Sims[[i]] <- Simi
+    } else {
+      Sims[[i]] <- Simi
+    }
+    if (i %% 50 == 0){
+      message(i)
+    }
+  }
+}
+
+df <- bind_rows(Sims)
+
+ggplot(df, aes(x = pred_souv, y = generation)) +
+  ggridges::geom_density_ridges() +
+  facet_grid(rows = vars(region),
+             cols = vars(langue))
+
+
+
+
+
+
+
+
+
