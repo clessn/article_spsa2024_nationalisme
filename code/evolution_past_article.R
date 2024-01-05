@@ -223,7 +223,7 @@ plot1 <- GraphData %>%
   geom_point(size = 2, color = "black") +
   theme_minimal() +
   labs(
-    x = "Year",
+    x = "",
     y = "Predicted position on independantist scale",
     linetype = "Geoloc",
     color = "Geoloc"
@@ -235,7 +235,8 @@ plot1 <- GraphData %>%
       "suburbs" = "solid", 
       "region" = "dotted"
     ),
-    guide = guide_legend(title = "Geoloc")
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
   ) +
   scale_color_manual(
     values = c(
@@ -244,17 +245,18 @@ plot1 <- GraphData %>%
       "suburbs" = "gray", 
       "region" = "black"
     ),
-    guide = guide_legend(title = "Geoloc")
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
   ) +
   scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independantist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
-  
+  ylab("\nPredicted position\non independentist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 print(plot1)
+
 
 ## squelette Graph2
 plot2 <- GraphData %>%
@@ -269,23 +271,415 @@ plot2 <- GraphData %>%
   geom_point(size = 2, color = "black") +
   theme_minimal() +
   labs(
-    x = "Year",
+    x = "",
     y = "Predicted position on independantist scale"
   ) +
-  facet_wrap(~ses_geoloc.1, ncol = 4) +
-  scale_x_continuous(breaks = seq(1975:2020, by = 5)) +
+  facet_wrap(
+    ~ ses_geoloc.1, 
+    ncol = 4, 
+    labeller = labeller(ses_geoloc.1 = c(
+      "montreal" = "Montreal", 
+      "quebec" = "Quebec", 
+      "region" = "Regions", 
+      "suburbs" = "Suburbs"
+    ))
+  ) +
+  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independantist scale\n") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
 
 print(plot2)
 
 ## combinaison des graphs
 
-combined_plot <- plot1 + plot2 +
-  plot_layout(nrow = 2, byrow = TRUE) +  # Organise en deux lignes
-  plot_annotation(title = "Boomer", theme = theme(plot.title = element_text(hjust = 0.5)))
+combined_plot <- plot1 / plot2 +
+  plot_annotation(title = "Boomer", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
 print(combined_plot)
 
+
+ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_boomer.png", 
+       plot = combined_plot, width = 7, height = 8)
+
+## preboomer ------------------------------------------------------------------
+
+## squelette Graph1
+plot1 <- GraphData %>%
+  filter(generation == "preboomer" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Predicted position on independantist scale",
+    linetype = "Geoloc",
+    color = "Geoloc"
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "montreal" = "solid", 
+      "quebec" = "dashed", 
+      "suburbs" = "solid", 
+      "region" = "dotted"
+    ),
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+  ) +
+  scale_color_manual(
+    values = c(
+      "montreal" = "black", 
+      "quebec" = "black", 
+      "suburbs" = "gray", 
+      "region" = "black"
+    ),
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+  ) +
+  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independentist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(plot1)
+
+
+## squelette Graph2
+plot2 <- GraphData %>%
+  filter(generation == "preboomer" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Predicted position on independantist scale"
+  ) +
+  facet_wrap(
+    ~ ses_geoloc.1, 
+    ncol = 4, 
+    labeller = labeller(ses_geoloc.1 = c(
+      "montreal" = "Montreal", 
+      "quebec" = "Quebec", 
+      "region" = "Regions", 
+      "suburbs" = "Suburbs"
+    ))
+  ) +
+  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independantist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+print(plot2)
+
+## combinaison des graphs
+
+combined_plot <- plot1 / plot2 +
+  plot_annotation(title = "Pre-boomer", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
+print(combined_plot)
+
+
+ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_preboomer.png", 
+       plot = combined_plot, width = 7, height = 8)
+
+## x ------------------------------------------------------------------
+
+## squelette Graph1
+plot1 <- GraphData %>%
+  filter(generation == "x" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Predicted position on independantist scale",
+    linetype = "Geoloc",
+    color = "Geoloc"
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "montreal" = "solid", 
+      "quebec" = "dashed", 
+      "suburbs" = "solid", 
+      "region" = "dotted"
+    ),
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+  ) +
+  scale_color_manual(
+    values = c(
+      "montreal" = "black", 
+      "quebec" = "black", 
+      "suburbs" = "gray", 
+      "region" = "black"
+    ),
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+  ) +
+  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independentist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(plot1)
+
+
+## squelette Graph2
+plot2 <- GraphData %>%
+  filter(generation == "x" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Predicted position on independantist scale"
+  ) +
+  facet_wrap(
+    ~ ses_geoloc.1, 
+    ncol = 4, 
+    labeller = labeller(ses_geoloc.1 = c(
+      "montreal" = "Montreal", 
+      "quebec" = "Quebec", 
+      "region" = "Regions", 
+      "suburbs" = "Suburbs"
+    ))
+  ) +
+  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independantist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+print(plot2)
+
+## combinaison des graphs
+
+combined_plot <- plot1 / plot2 +
+  plot_annotation(title = "X Generation", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
+print(combined_plot)
+
+
+ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_x.png", 
+       plot = combined_plot, width = 7, height = 8)
+
+## y ------------------------------------------------------------------
+
+## squelette Graph1
+plot1 <- GraphData %>%
+  filter(generation == "y" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Predicted position on independantist scale",
+    linetype = "Geoloc",
+    color = "Geoloc"
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "montreal" = "solid", 
+      "quebec" = "dashed", 
+      "suburbs" = "solid", 
+      "region" = "dotted"
+    ),
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+  ) +
+  scale_color_manual(
+    values = c(
+      "montreal" = "black", 
+      "quebec" = "black", 
+      "suburbs" = "gray", 
+      "region" = "black"
+    ),
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+  ) +
+  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independentist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(plot1)
+
+
+## squelette Graph2
+plot2 <- GraphData %>%
+  filter(generation == "y" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Predicted position on independantist scale"
+  ) +
+  facet_wrap(
+    ~ ses_geoloc.1, 
+    ncol = 4, 
+    labeller = labeller(ses_geoloc.1 = c(
+      "montreal" = "Montreal", 
+      "quebec" = "Quebec", 
+      "region" = "Regions", 
+      "suburbs" = "Suburbs"
+    ))
+  ) +
+  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independantist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+print(plot2)
+
+## combinaison des graphs
+
+combined_plot <- plot1 / plot2 +
+  plot_annotation(title = "Y Generation", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
+print(combined_plot)
+
+
+ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_y.png", 
+       plot = combined_plot, width = 7, height = 8)
+
+## z ------------------------------------------------------------------
+
+## squelette Graph1
+plot1 <- GraphData %>%
+  filter(generation == "z" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Predicted position on independantist scale",
+    linetype = "Geoloc",
+    color = "Geoloc"
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "montreal" = "solid", 
+      "quebec" = "dashed", 
+      "suburbs" = "solid", 
+      "region" = "dotted"
+    ),
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+  ) +
+  scale_color_manual(
+    values = c(
+      "montreal" = "black", 
+      "quebec" = "black", 
+      "suburbs" = "gray", 
+      "region" = "black"
+    ),
+    guide = guide_legend(title = "Region type"),
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Suburbs")
+  ) +
+  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independentist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(plot1)
+
+
+## squelette Graph2
+plot2 <- GraphData %>%
+  filter(generation == "z" & year != 2023) %>%
+  mutate(
+    conf.low = ifelse(conf.low < 0, 0, conf.low),
+    conf.high = ifelse(conf.high > 1, 1, conf.high)
+  ) %>%
+  ggplot(aes(x = year, y = estimate)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
+  geom_line(size = 1) +
+  geom_point(size = 2, color = "black") +
+  theme_minimal() +
+  labs(
+    x = "",
+    y = "Predicted position on independantist scale"
+  ) +
+  facet_wrap(
+    ~ ses_geoloc.1, 
+    ncol = 4, 
+    labeller = labeller(ses_geoloc.1 = c(
+      "montreal" = "Montreal", 
+      "quebec" = "Quebec", 
+      "region" = "Regions", 
+      "suburbs" = "Suburbs"
+    ))
+  ) +
+  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
+  scale_y_continuous(limits = c(-0.3, 1.4),
+                     breaks = c(-0.05, 0.5, 1.05),
+                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+  ylab("\nPredicted position\non independantist scale\n") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+print(plot2)
+
+## combinaison des graphs
+
+combined_plot <- plot1 / plot2 +
+  plot_annotation(title = "Z Generation", theme = theme(plot.title = element_text(hjust = 0.5))) +
+  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
+print(combined_plot)
+
+
+ggsave(filename = "~/SharedFolder_spsa_article_nationalisme/graph/models/evolution/plot_z.png", 
+       plot = combined_plot, width = 7, height = 8)
