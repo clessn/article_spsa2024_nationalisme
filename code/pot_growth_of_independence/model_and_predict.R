@@ -80,10 +80,14 @@ common_theme <- function() {
     geom_linerange(aes(ymin = conf_low, ymax = conf_high), position = position_dodge2(width = 0.4)),
     scale_color_grey(),
     scale_y_continuous(limits = c(0, 1),
-                       expand = c(0,0)),
-    ylab("Predicted mean position\non independence scale"),
+                       expand = c(0,0),
+                       breaks = c(0.13, 0.5, 0.87),
+                       labels = c("More\nFederalist", "Neutral", "More\nSeparatist")),
+    ylab("\nWeighted average of predicted\npositions on independence scale\n"),
     clessnverse::theme_clean_light(),
-    theme(axis.text.x = element_text(angle = 90, hjust = 1),
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+          axis.title.y = element_text(hjust = 0.5),
+          axis.text.y = element_text(angle = 90, hjust = 0.5),
           panel.background = element_rect(fill = NA, color = "lightgrey"))
   )
 }
@@ -92,12 +96,42 @@ common_theme <- function() {
 
 ## Aggregate ---------------------------------------------------------------
 
-ggplot(PredsAgg,
-       aes(x = region,
+PredsAgg %>%
+  mutate(generation = case_when(
+    generation == "preboomer" ~ "Pre-boomer\n77-99 years old",
+    generation == "boomer" ~ "Boomer\n63-76 years old",
+    generation == "x" ~ "X's\n48-62 years old",
+    generation == "y" ~ "Y's\n33-47 years old",
+    generation == "z" ~ "Z's\n18-32 years old"
+  ),
+  generation = factor(generation, levels = c("Pre-boomer\n77-99 years old",
+                                             "Boomer\n63-76 years old",
+                                             "X's\n48-62 years old",
+                                             "Y's\n33-47 years old",
+                                             "Z's\n18-32 years old")),
+  langue = case_when(
+    langue == "french" ~ "Francophone",
+    langue == "english" ~ "Anglophone",
+    langue == "other" ~ "Allophone"
+  ),
+  langue = factor(langue, levels = c("Francophone", "Anglophone", "Allophone")),
+  region = case_when(
+    region == "mtl" ~ "Montreal",
+    region == "rmr" ~ "Greater\nMontreal Area",
+    region == "qc" ~ "Quebec City",
+    region == "region" ~ "Regions"
+  ),
+  region = factor(region, levels = c("Montreal", "Quebec City",
+                                     "Regions", "Greater\nMontreal Area"))) %>% 
+  ggplot(aes(x = region,
            y = weighted_mean_estimate,
            color = langue)) +
   facet_wrap(~ generation,
              nrow = 1) +
+  xlab("") +
+  labs(title = "Current Attitudes on Quebec Sovereignty",
+       subtitle = "By Region, Generation and Language Group",
+       caption = "Survey data from 2021 to 2023, n = 6687. The Y-axis shows the region-wise weighted average of\nattitudes towards Quebec sovereignty based on a linear model and 2021 census data.") +
   common_theme()
 
 ggsave("SharedFolder_spsa_article_nationalisme/graphs/models/potgrowth/aggregate/facet_generation.png",
