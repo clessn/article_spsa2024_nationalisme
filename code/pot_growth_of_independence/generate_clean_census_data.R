@@ -236,7 +236,7 @@ for (i in 1:nrow(CensusWide)) {
                     "51_75" = CensusWide$income_51_75[i],
                     "76_90" = CensusWide$income_76_90[i],
                     "91_100" = CensusWide$income_91_100[i])
-  censusIncome <- censusIncome/sum(censusIncome)
+  censusPropsIncome <- censusIncome/sum(censusIncome)
   
   FirstStrat <- SurveyData %>%
     select(generation, langue) %>%
@@ -247,8 +247,8 @@ for (i in 1:nrow(CensusWide)) {
     mutate(prct = n / sum(n)) %>% 
     group_by(langue) %>% 
     mutate(prct = sum(prct))
-  FirstStrat$adjustCoef <- censusLangue/FirstStrat$prct
-  FirstStrat$newFreq <- FirstStrat$n*FirstStrat$adjustCoef
+  FirstStrat$adjustCoef <- censusPropsLangue[as.character(FirstStrat$langue)]/FirstStrat$prct
+  FirstStrat$newFreq <- FirstStrat$n * FirstStrat$adjustCoef
   FirstStrat <- FirstStrat %>% 
     ungroup() %>% 
     select(generation, langue, newFreq) %>%
@@ -257,51 +257,44 @@ for (i in 1:nrow(CensusWide)) {
   
   LastStage <- FirstStrat
   
-  for (j in c("gender", "origin", "income")){
-    
+  next_vars <- c("gender", "origin", "income")
+  for (j in 1:length(next_vars)){
+    #### https://github.com/clessn/elxn-qc2022/blob/main/codeR/stratTableGenerator.R
+    vars <- c("generation", "langue", next_vars[1:j])
+    if (vars[2 + j]=="gender") {
+      censusProps <- censusPropsGender
+    } else if (vars[2 + j]=="origin") {
+      censusProps <- censusPropsOrigin
+    } else if (vars[2 + j]=="income") {
+      censusProps <- censusPropsIncome
+    }
+    Stratj <- SurveyData %>%
+      select(all_of(vars)) %>%
+      na.omit() %>%
+      group_by_at(vars) %>%
+      summarise(n = n()) %>%
+      ungroup() %>%
+      tidyr::complete(!!!syms(vars), fill = list(n = 0)) %>% 
+      mutate(prct = n / sum(n)) %>%
+      group_by_at(vars[-1]) %>%
+      mutate(prct2 = sum(prct))
+    Stratj$censusProp <- censusProps[as.character(Stratj[[vars[2+j]]])]
+    Stratj$adjustCoef <- Stratj$censusProp / Stratj$prct2
+    Stratj$adjustCoef <- ifelse(Stratj$adjustCoef %in% c(-Inf, Inf), 0, Stratj$adjustCoef)
+    Stratj$newFreq <- Stratj$n * Stratj$adjustCoef
+    Stratj2 <- Stratj %>%
+      select(all_of(vars), newFreq) %>%
+      rename(n = newFreq) %>%
+      group_by_at(vars[-(j+2)]) %>%
+      mutate(prct = (n / sum(n)))
+    LastStagej <- LastStage %>%
+      select(-n) %>%
+      rename(prct_ls = prct)
+    Strat2 <- left_join(Stratj2, LastStagej) %>%
+      mutate(prct = prct * prct_ls)
+    LastStage <- Strat2 %>%
+      select(-prct_ls)
   }
-  
-  
-  Strat <- SurveyData %>%
-    select(gender, age, langue) %>%
-    na.omit() %>%
-    group_by(gender, age, langue) %>%
-    summarise(n = n()) %>%
-    ungroup() %>%
-    mutate(prct = n / sum(n))
-  vars <- c("gender", "age", "langue")
-  args <- paste0("unique(Strat$", vars, ")", collapse = ", ")
-  
-  AllCombs <-
-    eval(parse(text = paste0("expand.grid(", args, ")")))
-  names(AllCombs) <- vars
-  
-  Strat <- left_join(AllCombs, Strat) %>%
-    replace(is.na(.), 0) %>%
-    group_by(age, langue) %>%
-    mutate(prct2 = sum(prct))
-  
-  Strat$adjustCoef <- censusPropsLangue[as.character(Strat$langue)]/Strat$prct2
-  Strat$adjustCoef <-
-    ifelse(Strat$adjustCoef %in% c(-Inf, Inf), 0, Strat$adjustCoef)
-  Strat$newFreq <- Strat$n * Strat$adjustCoef
-  
-  Strat <- Strat %>%
-    select(all_of(vars), newFreq) %>%
-    rename(n = newFreq) %>%
-    group_by(gender, age) %>%
-    mutate(prct = (n / sum(n)))
-  
-  LastStagej <- LastStage %>%
-    select(-n) %>%
-    rename(prct_ls = prct)
-  
-  Strat2 <- left_join(Strat, LastStagej) %>%
-    mutate(prct = prct * prct_ls)
-  
-  LastStage <- Strat2 %>%
-    select(-prct_ls)
-  
   if (i == 1) {
     StratTable <- LastStage %>%
       mutate(riding_id = riding_idi)
@@ -325,4 +318,42 @@ StratTable %>%
   arrange(-sum)
 #### Every riding has a sum of 1? Good!!
 
-saveRDS(StratTable, "_SharedFolder_article_pot-growth/data/warehouse/dimensions/census/provqc2022/poststrat.rds")
+
+# Aggregate by region -----------------------------------------------------
+
+## add total pop by riding
+total_pops <- CensusWide$total_pop
+names(total_pops) <- CensusWide$riding_id
+StratTable$total_pop <- total_pops[as.character(StratTable$riding_id)]
+## calculate freq in riding
+StratTable$riding_freq <- StratTable$prct * StratTable$total_pop
+
+## associate each riding to its region
+region_ridings <- read.csv("SharedFolder_spsa_article_nationalisme/data/census/region_ridings.csv")
+
+large_regions <- region_ridings$large
+names(large_regions) <- region_ridings$riding_id
+StratTable$large_region <- large_regions[as.character(StratTable$riding_id)]
+
+granular_regions <- region_ridings$granular
+names(granular_regions) <- region_ridings$riding_id
+StratTable$granular_region <- granular_regions[as.character(StratTable$riding_id)]
+
+## aggregate the proportions by regions
+
+### large
+
+StratTableLarge <- StratTable %>% 
+  group_by(large_region, generation, langue,
+           gender, origin, income) %>%
+  summarise(n = sum(riding_freq)) %>% 
+  group_by(large_region) %>% 
+  mutate(total_region = sum(n),
+         prct_region = n / total_region) %>% 
+  ungroup() %>% 
+  mutate(prct_total = n / sum(n))
+
+saveRDS(StratTableLarge, "SharedFolder_spsa_article_nationalisme/data/census/poststrat_large.rds")
+
+### granular
+saveRDS(StratTable, "SharedFolder_spsa_article_nationalisme/data/census/poststrat_granular.rds")
