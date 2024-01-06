@@ -339,6 +339,8 @@ granular_regions <- region_ridings$granular
 names(granular_regions) <- region_ridings$riding_id
 StratTable$granular_region <- granular_regions[as.character(StratTable$riding_id)]
 
+saveRDS(StratTable, "SharedFolder_spsa_article_nationalisme/data/census/poststrat.rds")
+
 ## aggregate the proportions by regions
 
 ### large

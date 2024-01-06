@@ -1,5 +1,6 @@
 # Packages ----------------------------------------------------------------
 library(dplyr)
+library(patchwork)
 library(ggplot2)
 
 # Data --------------------------------------------------------------------
@@ -45,6 +46,7 @@ Strat <- readRDS("SharedFolder_spsa_article_nationalisme/data/census/poststrat_l
 model <- lm(iss_souv ~ . + generation * region * langue,
             data = Data)
 summary(model)
+saveRDS(model, "SharedFolder_spsa_article_nationalisme/modelsouv2023.rds")
 
 marginaleffects::predictions(model, by = "generation")
 
