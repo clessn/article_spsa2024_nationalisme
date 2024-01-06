@@ -210,6 +210,11 @@ generations_yob <- list(
 ## 1. start by only doing it for 1 genration (example: boomer)
 
 ## Boomer ------------------------------------------------------------------
+calculate_age_range <- function(year, birth_start = 1947, birth_end = 1961) {
+  age_start = year - birth_end
+  age_end = year - birth_start
+  return(paste(age_start, "-", age_end))
+}
 
 ## squelette graphs1
 plot1 <- graphsData %>%
@@ -253,7 +258,16 @@ plot1 <- graphsData %>%
                      breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
+  
+  # Add age labels
+  break_years <- seq(from = 1975, to = 2020, by = 5)
+for (year in break_years) {
+  age_label <- calculate_age_range(year)
+  plot1 <- plot1 +
+    annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
+}
 
 print(plot1)
 
@@ -290,7 +304,8 @@ plot2 <- graphsData %>%
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independantist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, vjust = 0.5)) 
 
 print(plot2)
 
@@ -298,7 +313,7 @@ print(plot2)
 
 combined_plot <- plot1 / plot2 +
   plot_annotation(title = "Boomer",
-                  caption = "Prediction, all else being equal, for a Francophone man of the boomer generation",
+                  caption =  "Prediction, all else being equal, for a middle-class Francophone man from Canada with low political sophistication of the Boomer generation.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
 print(combined_plot)
@@ -353,6 +368,7 @@ plot1 <- graphsData %>%
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 
 print(plot1)
 
@@ -646,6 +662,7 @@ plot1 <- graphsData %>%
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 
 print(plot1)
 
