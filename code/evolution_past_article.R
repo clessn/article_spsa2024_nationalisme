@@ -229,7 +229,7 @@ plot1 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale",
+    y = "Predicted position on independentist scale",
     linetype = "Geoloc",
     color = "Geoloc"
   ) +
@@ -300,7 +300,7 @@ plot2 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale"
+    y = "Predicted position on independentist scale"
   ) +
   facet_wrap(
     ~ ses_geoloc.1, 
@@ -316,7 +316,7 @@ plot2 <- graphsData %>%
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independantist scale\n") +
+  ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         axis.text.y = element_text(angle = 90, vjust = 0.5)) 
 
@@ -362,7 +362,7 @@ plot1 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale",
+    y = "Predicted position on independentist scale",
     linetype = "Geoloc",
     color = "Geoloc"
   ) +
@@ -419,7 +419,7 @@ plot2 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale"
+    y = "Predicted position on independentist scale"
   ) +
   facet_wrap(
     ~ ses_geoloc.1, 
@@ -435,7 +435,7 @@ plot2 <- graphsData %>%
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independantist scale\n") +
+  ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
@@ -478,7 +478,7 @@ plot1 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale",
+    y = "Predicted position on independentist scale",
     linetype = "Geoloc",
     color = "Geoloc"
   ) +
@@ -536,7 +536,7 @@ plot2 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale"
+    y = "Predicted position on independentist scale"
   ) +
   facet_wrap(
     ~ ses_geoloc.1, 
@@ -552,7 +552,7 @@ plot2 <- graphsData %>%
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independantist scale\n") +
+  ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
@@ -595,7 +595,7 @@ plot1 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale",
+    y = "Predicted position on independentist scale",
     linetype = "Geoloc",
     color = "Geoloc"
   ) +
@@ -653,7 +653,7 @@ plot2 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale"
+    y = "Predicted position on independentist scale"
   ) +
   facet_wrap(
     ~ ses_geoloc.1, 
@@ -669,7 +669,7 @@ plot2 <- graphsData %>%
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independantist scale\n") +
+  ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
@@ -714,7 +714,7 @@ plot1 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale",
+    y = "Predicted position on independentist scale",
     linetype = "Geoloc",
     color = "Geoloc"
   ) +
@@ -772,7 +772,7 @@ plot2 <- graphsData %>%
   theme_minimal() +
   labs(
     x = "",
-    y = "Predicted position on independantist scale"
+    y = "Predicted position on independentist scale"
   ) +
   facet_wrap(
     ~ ses_geoloc.1, 
@@ -788,7 +788,7 @@ plot2 <- graphsData %>%
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independantist scale\n") +
+  ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
