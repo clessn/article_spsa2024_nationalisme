@@ -268,7 +268,20 @@ for (year in break_years) {
   plot1 <- plot1 +
     annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
 }
-
+  
+  # Add event lines and labels
+  events_dframe <- data.frame(
+    year = c(1980, 1990, 1995),
+    label = c("Referendum", "Meech\nFailure", "Referendum"),
+    y_value_for_labels = rep(1.5, 3)  # Replicate the y-value for each event
+  )
+  
+  plot1 <- plot1 +
+    geom_vline(data = events_dframe, aes(xintercept = year), linetype = "dotted", color = "red") +
+    geom_text(data = events_dframe, aes(x = year, y = y_value_for_labels, label = label), 
+              angle = 45, vjust = 1, hjust = 1, size = 3)
+  
+  
 print(plot1)
 
 
@@ -309,14 +322,20 @@ plot2 <- graphsData %>%
 
 print(plot2)
 
-## combinaison des graphss
 
-combined_plot <- plot1 / plot2 +
+## combinaison des graphss
+# Sous-layout pour plot1 avec des espaces de chaque côté
+plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
+
+# Adjust the widths argument to change spacer size
+plot1_with_spacers <- plot1_with_spacers + plot_layout(widths = c(1, 5, 1))  # Adjust the ratio as needed
+
+# Layout combiné
+combined_plot <- plot1_with_spacers / plot2 +
   plot_annotation(title = "Boomer",
-                  caption =  "Prediction, all else being equal, for a middle-class Francophone man from Canada with low political sophistication of the Boomer generation.",
+                  caption = "Prediction for a boomer Francophone man from Canada, positioned in the second income quartile,\n  characterized by high political sophistication, assuming all other factors remain constant.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
-  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
-print(combined_plot)
+  plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
 
 
 ggsave(plot = combined_plot,
@@ -324,6 +343,11 @@ ggsave(plot = combined_plot,
        width = 12, height = 8)
 
 ## preboomer ------------------------------------------------------------------
+calculate_age_rangePB <- function(year, birth_start = 1925, birth_end = 1947) {
+  age_start = year - birth_end
+  age_end = year - birth_start
+  return(paste(age_start, "-", age_end))
+}
 
 ## squelette graphs1
 plot1 <- graphsData %>%
@@ -367,9 +391,16 @@ plot1 <- graphsData %>%
                      breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5))
 
-
+# Add age labels
+break_years <- seq(from = 1975, to = 2020, by = 5)
+for (year in break_years) {
+  age_label <- calculate_age_rangePB(year)
+  plot1 <- plot1 +
+    annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
+}
 print(plot1)
 
 
@@ -405,23 +436,34 @@ plot2 <- graphsData %>%
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independantist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
 print(plot2)
 
 ## combinaison des graphss
+# Sous-layout pour plot1 avec des espaces de chaque côté
+plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
 
-combined_plot <- plot1 / plot2 +
-  plot_annotation(title = "Preboomer",
-                  caption = "Prediction, all else being equal, for a Francophone man of the preboomer generation",
+# Adjust the widths argument to change spacer size
+plot1_with_spacers <- plot1_with_spacers + plot_layout(widths = c(1, 5, 1))  # Adjust the ratio as needed
+
+# Layout combiné
+combined_plot <- plot1_with_spacers / plot2 +
+  plot_annotation(title = "Pre-boomer",
+                  caption = "Prediction for a pre-boomer Francophone man from Canada, positioned in the second income quartile,\n characterized by high political sophistication, assuming all other factors remain constant.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
-  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
-print(combined_plot)
+  plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
 
 ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_preboomer.png", 
        plot = combined_plot, width = 12, height = 8)
 
 ## x ------------------------------------------------------------------
+calculate_age_rangeX <- function(year, birth_start = 1962, birth_end = 1976) {
+  age_start = year - birth_end
+  age_end = year - birth_start
+  return(paste(age_start, "-", age_end))
+}
 
 ## squelette graphs1
 plot1 <- graphsData %>%
@@ -460,12 +502,21 @@ plot1 <- graphsData %>%
     guide = guide_legend(title = "Region type"),
     labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
-  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+  scale_x_continuous(breaks = seq(from = 1985, to = 2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
+
+# Add age labels
+break_years <- seq(from = 1985, to = 2020, by = 5)
+for (year in break_years) {
+  age_label <- calculate_age_rangeX(year)
+  plot1 <- plot1 +
+    annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
+}
 
 print(plot1)
 
@@ -497,29 +548,39 @@ plot2 <- graphsData %>%
       "suburbs" = "Greater Montreal Area"
     ))
   ) +
-  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
+  scale_x_continuous(breaks = seq(from=1985, to=2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independantist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
 print(plot2)
 
 ## combinaison des graphss
+# Sous-layout pour plot1 avec des espaces de chaque côté
+plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
 
-combined_plot <- plot1 / plot2 +
+# Adjust the widths argument to change spacer size
+plot1_with_spacers <- plot1_with_spacers + plot_layout(widths = c(1, 5, 1))  # Adjust the ratio as needed
+
+# Layout combiné
+combined_plot <- plot1_with_spacers / plot2 +
   plot_annotation(title = "X",
-                  caption = "Prediction, all else being equal, for a Francophone man of the X generation",
+                  caption = "Prediction for a X Francophone man from Canada, positioned in the second income quartile,\n characterized by high political sophistication, assuming all other factors remain constant.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
-  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
-print(combined_plot)
-
+  plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
 
 ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_x.png", 
        plot = combined_plot, width = 12, height = 8)
 
 ## y ------------------------------------------------------------------
+calculate_age_rangeY <- function(year, birth_start = 1977, birth_end = 1991) {
+  age_start = year - birth_end
+  age_end = year - birth_start
+  return(paste(age_start, "-", age_end))
+}
 
 ## squelette graphs1
 plot1 <- graphsData %>%
@@ -558,12 +619,21 @@ plot1 <- graphsData %>%
     guide = guide_legend(title = "Region type"),
     labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
-  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+  scale_x_continuous(breaks = seq(from = 2005, to = 2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
+
+# Add age labels
+break_years <- seq(from = 2005, to = 2020, by = 5)
+for (year in break_years) {
+  age_label <- calculate_age_rangeY(year)
+  plot1 <- plot1 +
+    annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
+}
 
 print(plot1)
 
@@ -595,29 +665,41 @@ plot2 <- graphsData %>%
       "suburbs" = "Greater Montreal Area"
     ))
   ) +
-  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
+  scale_x_continuous(breaks = seq(from=2005, to=2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independantist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
 print(plot2)
 
 ## combinaison des graphss
+# Sous-layout pour plot1 avec des espaces de chaque côté
+plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
 
-combined_plot <- plot1 / plot2 +
+# Adjust the widths argument to change spacer size
+plot1_with_spacers <- plot1_with_spacers + plot_layout(widths = c(1, 5, 1))  # Adjust the ratio as needed
+
+# Layout combiné
+combined_plot <- plot1_with_spacers / plot2 +
   plot_annotation(title = "Y",
-                  caption = "Prediction, all else being equal, for a Francophone man of the Y generation",
+                  caption = "Prediction for a Y Francophone man from Canada, positioned in the second income quartile,\n characterized by high political sophistication, assuming all other factors remain constant.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
-  plot_layout(widths = c(9, 8), heights = unit(c(7, 0.5), c('cm', 'null')))
-print(combined_plot)
+  plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
 
 
 ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_y.png", 
        plot = combined_plot, width = 12, height = 8)
 
 ## z ------------------------------------------------------------------
+calculate_age_range_Z <- function(year, birth_start = 1992, birth_end = 2003) {
+  age_start = year - birth_end
+  age_end = year - birth_start
+  return(paste(age_start, "-", age_end))
+}
+
 
 ## squelette graphs1
 plot1 <- graphsData %>%
@@ -656,13 +738,21 @@ plot1 <- graphsData %>%
     guide = guide_legend(title = "Region type"),
     labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
   ) +
-  scale_x_continuous(breaks = seq(from = 2015, to = 2022, by = 3)) +
+  scale_x_continuous(breaks = seq(from = 2015, to = 2020, by = 5)) +
   scale_y_continuous(limits = c(-0.3, 1.4),
                      breaks = c(-0.2, 0.55, 1.3),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
+# Add age labels
+break_years <- seq(from = 2015, to = 2020, by = 5)
+for (year in break_years) {
+  age_label <- calculate_age_range_Z(year)
+  plot1 <- plot1 +
+    annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
+}
 
 print(plot1)
 
@@ -699,21 +789,24 @@ plot2 <- graphsData %>%
                      breaks = c(-0.05, 0.5, 1.05),
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independantist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
 print(plot2)
 
 ## combinaison des graphss
-
 # Sous-layout pour plot1 avec des espaces de chaque côté
 plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
+
+# Adjust the widths argument to change spacer size
+plot1_with_spacers <- plot1_with_spacers + plot_layout(widths = c(1, 5, 1))  # Adjust the ratio as needed
 
 # Layout combiné
 combined_plot <- plot1_with_spacers / plot2 +
   plot_annotation(title = "Z",
-                  caption = "Prediction, all else being equal, for a Francophone man of the Z generation",
+                  caption = "Prediction for a Z Francophone man from Canada, positioned in the second income quartile,\n characterized by high political sophistication, assuming all other factors remain constant.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
-  plot_layout(widths = c(0.1, 10, 0.1), heights = unit(c(7, 0.5), c('cm', 'null')))
+  plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
 
 
 ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_z.png", 
