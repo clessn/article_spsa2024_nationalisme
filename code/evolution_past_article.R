@@ -36,6 +36,20 @@ years_to_keep <- c("1" = 1974,
                    "2" = 2022,
                    "2" = 2023)
 
+response_scales <- c(
+  `1974` = "dichotomous",
+  `1979` = "point4",
+  `1984` = "dichotomous",
+  `1988` = "point4",
+  `1993` = "point4",
+  `2004` = "point4",
+  `2008` = "point4",
+  `2015` = "point4",
+  `2019` = "point4",
+  `2021` = "point4",
+  `2022` = "point4",
+  `2023` = "point5"
+)
 
 for (i in 1:length(years_to_keep)){
   yeari <- years_to_keep[i]
@@ -136,6 +150,26 @@ for (i in c(1997, 2000)){
   }
 }
 
+#### to check complete cases
+
+for (i in years_to_keep){
+  completecasesi <- linear_models[[as.character(i)]]$model %>% 
+    mutate(year = i)
+  if (i == 1974){
+    completecases <- completecasesi
+  } else {
+    completecases <- bind_rows(completecases, completecasesi)
+  }
+}
+
+for (i in c(1997, 2000)){
+  completecasesi <- linear_models_19972000[[as.character(i)]]$model %>% 
+    mutate(year = i)
+  completecases <- bind_rows(completecases, completecasesi)
+}
+
+table(completecases$year)
+
 # Predict models ------------------------------------------------------------------
 
 ## fix the available generations for each year
@@ -176,6 +210,7 @@ for (i in 1:length(linear_models)){
   message(yeari)
 }
 
+graphsData$response_scale <- response_scales[as.character(graphsData$year)]
 graphsData$year <- as.numeric(graphsData$year)
 
 ### graphsData contains the main data for the graphs!
@@ -207,7 +242,6 @@ for (i in c("montreal", "quebec", "region", "suburbs")){
 
 graphsData2 <- bind_rows(graphsData, preds19972000)
 
-
 # graphs -------------------------------------------------------------------
 
 ## squelette
@@ -221,25 +255,9 @@ graphsData2 %>%
 ## 1. Generate auxiliary data ----------------------------------------------
 
 ### important events
-events_dfa <- data.frame(
-  year = c(1976, 1980, 1990, 1995, 2004, 2012)
-) %>% mutate(ses_geoloc.1 = "montreal",
-             label = c("PQ\nElection", "Referendum", "Meech\nFailure",
-                       "Referendum", "Gomery\nCommission", "Student\nCrisis"))
-events_dfb <- data.frame(
-  year = c(1976, 1980, 1990, 1995, 2004, 2012)
-) %>% mutate(ses_geoloc.1 = "region",
-             label = "")
-events_dfc <- data.frame(
-  year = c(1976, 1980, 1990, 1995, 2004, 2012)
-) %>% mutate(ses_geoloc.1 = "suburbs",
-             label = "")
-events_df <- rbind(events_dfa, events_dfb, events_dfc)
-
 events_df <- data.frame(
-  year = c(1976, 1980, 1990, 1995, 2004, 2012),
-  label = c("PQ\nElection", "Referendum", "Meech\nFailure",
-            "Referendum", "Gomery\nCommission", "Student\nCrisis")
+  year = c(1980, 1990, 1995),
+  label = c("Referendum", "Meech\nFailure", "Referendum")
 )
 
 
@@ -260,8 +278,96 @@ generations_yob <- list(
   "z" = c(1995, 2005)
 )
 
+# Functions ---------------------------------------------------------------
+old_gen_graphs_together <- function(data){
+  plot1 <- ggplot(data = data, aes(x = year, y = estimate)) +
+    geom_segment(x = 1997, xend = 1997, linetype = "dotted",
+                 linewidth = 0.5, color = "grey80",
+                 y = 0.3, yend = 0.7) +
+    geom_segment(x = 2000, xend = 2000, linetype = "dotted",
+                 linewidth = 0.6, color = "grey80",
+                 y = 0.3, yend = 0.7) +
+    geom_vline(data = events_df, aes(xintercept = year),
+               linetype = "dashed", color = "grey40") +
+    geom_text(data = events_df, aes(label = label, x = year + 0.5),
+              y = 1.4, angle = 90, hjust = 1, vjust = 1,
+              color = "grey40", lineheight = 0.7, size = 3.5) +
+    geom_line(size = 0.5, aes(linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+    geom_point(size = 1, color = "black") +
+    theme_minimal() +
+    labs(
+      x = "",
+      y = "Predicted position on independentist scale",
+      linetype = "Geoloc",
+      color = "Geoloc"
+    ) +
+    scale_linetype_manual(
+      values = c(
+        "montreal" = "longdash", 
+        "quebec" = "dashed", 
+        "suburbs" = "solid", 
+        "region" = "dotted",
+        "all" = "solid"
+      ),
+      guide = guide_legend(title = "Region type"),
+      labels = c("montreal"="Montreal", "quebec" = "Quebec City",
+                 "region"="Regions", "suburbs"="Greater Montreal Area",
+                 "all" = "All")
+    ) +
+    scale_color_manual(
+      values = c(
+        "montreal" = "grey", 
+        "quebec" = "black", 
+        "suburbs" = "black", 
+        "region" = "black"
+      ),
+      guide = guide_legend(title = "Region type"),
+      labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
+    ) +
+    scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
+    scale_y_continuous(limits = c(-0.3, 1.4),
+                       breaks = c(-0.2, 0.55, 1.3),
+                       labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+    ylab("\nPredicted position\non independentist scale\n") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.text.y = element_text(angle = 90, hjust = 0.5)) 
+  return(plot1)
+}
 
-## 1. start by only doing it for 1 genration (example: boomer)
+old_gen_graphs_facet <- function(data){
+  plot <- ggplot(data = data, aes(x = year, y = estimate)) +
+    geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
+    geom_line(size = 1) +
+    geom_point(aes(shape = response_scale), size = 2, color = "black") +
+    geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
+    theme_minimal() +
+    labs(
+      x = "",
+      y = "Predicted position on independentist scale"
+    ) +
+    facet_wrap(
+      ~ ses_geoloc.1, 
+      ncol = 4, 
+      labeller = labeller(ses_geoloc.1 = c(
+        "montreal" = "Montreal", 
+        "quebec" = "Quebec", 
+        "region" = "Regions", 
+        "suburbs" = "Greater Montreal Area"
+      ))
+    ) +
+    guides(shape = guide_legend(title = "Response scale")) +
+    scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
+    scale_y_continuous(limits = c(-0.3, 1.4),
+                       breaks = c(-0.05, 0.5, 1.05),
+                       labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+    scale_shape_manual(values = c(16, 17),
+                       labels = c("dichotomous" = "Dichotomous", "point4" = "Likert")) +
+    ylab("\nPredicted position\non independentist scale\n") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.text.y = element_text(angle = 90, vjust = 0.5, hjust = 0.5),
+          legend.position = "bottom")
+  return(plot)
+}
 
 ## Boomer ------------------------------------------------------------------
 calculate_age_range <- function(year, birth_start = 1947, birth_end = 1961) {
@@ -277,75 +383,15 @@ plot1 <- graphsData2 %>%
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
-  ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
-  geom_segment(x = 1997, xend = 1997, linetype = "dotted",
-             linewidth = 0.6, color = "grey70",
-             y = 0.3, yend = 0.7) +
-  geom_segment(x = 2000, xend = 2000, linetype = "dotted",
-               linewidth = 0.6, color = "grey70",
-               y = 0.3, yend = 0.7) +
-  geom_line(size = 0.5) +
-  geom_point(size = 1, color = "black") +
-  theme_minimal() +
-  labs(
-    x = "",
-    y = "Predicted position on independentist scale",
-    linetype = "Geoloc",
-    color = "Geoloc"
-  ) +
-  scale_linetype_manual(
-    values = c(
-      "montreal" = "longdash", 
-      "quebec" = "dashed", 
-      "suburbs" = "solid", 
-      "region" = "dotted",
-      "all" = "solid"
-    ),
-    guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City",
-               "region"="Regions", "suburbs"="Greater Montreal Area",
-               "all" = "All")
-  ) +
-  scale_color_manual(
-    values = c(
-      "montreal" = "grey", 
-      "quebec" = "black", 
-      "suburbs" = "black", 
-      "region" = "black"
-    ),
-    guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
-  ) +
-  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
-  scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.2, 0.55, 1.3),
-                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
-  
-  # Add age labels
-  break_years <- seq(from = 1975, to = 2020, by = 5)
+  old_gen_graphs_together(.)
+
+# Add age labels
+break_years <- seq(from = 1975, to = 2020, by = 5)
 for (year in break_years) {
   age_label <- calculate_age_range(year)
   plot1 <- plot1 +
     annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
 }
-  
-  # Add event lines and labels
-  #events_dframe <- data.frame(
-   # year = c(1980, 1990, 1995),
-  #  label = c("Referendum", "Meech\nFailure", "Referendum"),
-  #  y_value_for_labels = rep(1.5, 3)  # Replicate the y-value for each event
- # )
-  
-#  plot1 <- plot1 +
- #   geom_vline(data = events_dframe, aes(xintercept = year), linetype = "dotted", color = "red") +
- #   geom_text(data = events_dframe, aes(x = year, y = y_value_for_labels, label = label), 
-   #           angle = 45, vjust = 1, hjust = 1, size = 3)
-  #
-  
-print(plot1)
 
 
 ## squelette graphs2
@@ -355,36 +401,8 @@ plot2 <- graphsData %>%
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
-  ggplot(aes(x = year, y = estimate)) +
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
-  geom_line(size = 1) +
-  geom_point(size = 2, color = "black") +
-  geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
-  theme_minimal() +
-  labs(
-    x = "",
-    y = "Predicted position on independentist scale"
-  ) +
-  facet_wrap(
-    ~ ses_geoloc.1, 
-    ncol = 4, 
-    labeller = labeller(ses_geoloc.1 = c(
-      "montreal" = "Montreal", 
-      "quebec" = "Quebec", 
-      "region" = "Regions", 
-      "suburbs" = "Greater Montreal Area"
-    ))
-  ) +
-  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
-  scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.05, 0.5, 1.05),
-                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.text.y = element_text(angle = 90, vjust = 0.5, hjust = 0.5)) 
-
+  old_gen_graphs_facet(.)
 print(plot2)
-
 
 ## combinaison des graphss
 # Sous-layout pour plot1 avec des espaces de chaque côté
@@ -399,7 +417,6 @@ combined_plot <- plot1_with_spacers / plot2 +
                   caption = "Prediction for a boomer Francophone man from Canada, positioned in the second income quartile, characterized by high political sophistication, assuming all other factors remain constant.\nSince there is no available geographical data for the 1997 and 2000 CES, the prediction is the same for all regions.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
-
 
 ggsave(plot = combined_plot,
        filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_boomer.png", 
@@ -419,49 +436,7 @@ plot1 <- graphsData2 %>%
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
-  ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
-  geom_segment(x = 1997, xend = 1997, linetype = "dotted",
-               linewidth = 0.6, color = "grey70",
-               y = 0.25, yend = 0.65) +
-  geom_segment(x = 2000, xend = 2000, linetype = "dotted",
-               linewidth = 0.6, color = "grey70",
-               y = 0.25, yend = 0.65) +
-  geom_line(size = 0.5) +
-  geom_point(size = 1, color = "black") +
-  theme_minimal() +
-  labs(
-    x = "",
-    y = "Predicted position on independentist scale",
-    linetype = "Geoloc",
-    color = "Geoloc"
-  ) +
-  scale_linetype_manual(
-    values = c(
-      "montreal" = "longdash", 
-      "quebec" = "dashed", 
-      "suburbs" = "solid", 
-      "region" = "dotted"
-    ),
-    guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
-  ) +
-  scale_color_manual(
-    values = c(
-      "montreal" = "grey", 
-      "quebec" = "black", 
-      "suburbs" = "black", 
-      "region" = "black"
-    ),
-    guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
-  ) +
-  scale_x_continuous(breaks = seq(from = 1975, to = 2020, by = 5)) +
-  scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.2, 0.55, 1.3),
-                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.text.y = element_text(angle = 90, hjust = 0.5))
+  old_gen_graphs_together(.)
 
 # Add age labels
 break_years <- seq(from = 1975, to = 2020, by = 5)
@@ -470,8 +445,8 @@ for (year in break_years) {
   plot1 <- plot1 +
     annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
 }
-print(plot1)
 
+plot1
 
 ## squelette graphs2
 plot2 <- graphsData %>%
@@ -480,33 +455,7 @@ plot2 <- graphsData %>%
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
-  ggplot(aes(x = year, y = estimate)) +
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
-  geom_line(size = 1) +
-  geom_point(size = 2, color = "black") +
-  geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
-  theme_minimal() +
-  labs(
-    x = "",
-    y = "Predicted position on independentist scale"
-  ) +
-  facet_wrap(
-    ~ ses_geoloc.1, 
-    ncol = 4, 
-    labeller = labeller(ses_geoloc.1 = c(
-      "montreal" = "Montreal", 
-      "quebec" = "Quebec", 
-      "region" = "Regions", 
-      "suburbs" = "Greater Montreal Area"
-    ))
-  ) +
-  scale_x_continuous(breaks = seq(from=1975, to=2020, by = 5)) +
-  scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.05, 0.5, 1.05),
-                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
+  old_gen_graphs_facet(.)
 
 print(plot2)
 
@@ -535,58 +484,18 @@ calculate_age_rangeX <- function(year, birth_start = 1962, birth_end = 1976) {
 }
 
 ## squelette graphs1
+break_years <- seq(from = 1985, to = 2020, by = 5)
 plot1 <- graphsData2 %>%
   filter(generation == "x" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
-  ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
-  geom_segment(x = 1997, xend = 1997, linetype = "dotted",
-               linewidth = 0.6, color = "grey70",
-               y = 0.3, yend = 0.7) +
-  geom_segment(x = 2000, xend = 2000, linetype = "dotted",
-               linewidth = 0.6, color = "grey70",
-               y = 0.3, yend = 0.7) +
-  geom_line(size = 0.5) +
-  geom_point(size = 1, color = "black") +
-  theme_minimal() +
-  labs(
-    x = "",
-    y = "Predicted position on independentist scale",
-    linetype = "Geoloc",
-    color = "Geoloc"
-  ) +
-  scale_linetype_manual(
-    values = c(
-      "montreal" = "longdash", 
-      "quebec" = "dashed", 
-      "suburbs" = "solid", 
-      "region" = "dotted"
-    ),
-    guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
-  ) +
-  scale_color_manual(
-    values = c(
-      "montreal" = "grey", 
-      "quebec" = "black", 
-      "suburbs" = "black", 
-      "region" = "black"
-    ),
-    guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
-  ) +
-  scale_x_continuous(breaks = seq(from = 1985, to = 2020, by = 5)) +
-  scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.2, 0.55, 1.3),
-                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
+  old_gen_graphs_together(.) +
+  scale_x_continuous(limits = c(1984, 2022),
+                     breaks = break_years)
 
 # Add age labels
-break_years <- seq(from = 1985, to = 2020, by = 5)
 for (year in break_years) {
   age_label <- calculate_age_rangeX(year)
   plot1 <- plot1 +
@@ -603,33 +512,9 @@ plot2 <- graphsData %>%
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
-  ggplot(aes(x = year, y = estimate)) +
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, fill = "gray") +
-  geom_line(size = 1) +
-  geom_point(size = 2, color = "black") +
-  geom_hline(yintercept = 0.5, linetype = "solid", color = "black", size = 0.5) +
-  theme_minimal() +
-  labs(
-    x = "",
-    y = "Predicted position on independentist scale"
-  ) +
-  facet_wrap(
-    ~ ses_geoloc.1, 
-    ncol = 4, 
-    labeller = labeller(ses_geoloc.1 = c(
-      "montreal" = "Montreal", 
-      "quebec" = "Quebec", 
-      "region" = "Regions", 
-      "suburbs" = "Greater Montreal Area"
-    ))
-  ) +
-  scale_x_continuous(breaks = seq(from=1985, to=2020, by = 5)) +
-  scale_y_continuous(limits = c(-0.3, 1.4),
-                     breaks = c(-0.05, 0.5, 1.05),
-                     labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
-  ylab("\nPredicted position\non independentist scale\n") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.text.y = element_text(angle = 90, hjust = 0.5)) 
+  old_gen_graphs_facet(.) +
+  scale_x_continuous(limits = c(1984, 2022),
+                     breaks = break_years)
 
 print(plot2)
 
