@@ -270,17 +270,17 @@ for (year in break_years) {
 }
   
   # Add event lines and labels
-  events_dframe <- data.frame(
-    year = c(1980, 1990, 1995),
-    label = c("Referendum", "Meech\nFailure", "Referendum"),
-    y_value_for_labels = rep(1.5, 3)  # Replicate the y-value for each event
-  )
+  #events_dframe <- data.frame(
+   # year = c(1980, 1990, 1995),
+  #  label = c("Referendum", "Meech\nFailure", "Referendum"),
+  #  y_value_for_labels = rep(1.5, 3)  # Replicate the y-value for each event
+ # )
   
-  plot1 <- plot1 +
-    geom_vline(data = events_dframe, aes(xintercept = year), linetype = "dotted", color = "red") +
-    geom_text(data = events_dframe, aes(x = year, y = y_value_for_labels, label = label), 
-              angle = 45, vjust = 1, hjust = 1, size = 3)
-  
+#  plot1 <- plot1 +
+ #   geom_vline(data = events_dframe, aes(xintercept = year), linetype = "dotted", color = "red") +
+ #   geom_text(data = events_dframe, aes(x = year, y = y_value_for_labels, label = label), 
+   #           angle = 45, vjust = 1, hjust = 1, size = 3)
+  #
   
 print(plot1)
 
