@@ -118,10 +118,6 @@ plot_theme2 <- function(end){
     xlab(""),
     ylab(""),
     clessnverse::theme_clean_light(),
-    geom_text(label = "Less\nfederalist",
-              x = end, y = 0.45,
-              angle = 90, size = 2.75, hjust = 1,
-              vjust = 0, lineheight = 0.7),
     scale_color_gradient(name = "Weight of Gen Z\nin riding (%)",
                          low = "grey95", high = "black",
                          breaks = c(12:16),
@@ -152,15 +148,24 @@ for (i in 1:length(unique(Preds$region))){
     ggplot(aes(y = weighted_mean_estimate, x = reorder(riding_name, -weighted_mean_estimate))) +
     plot_theme2(end = endi) +
     ggtitle(region_names[regioni])
+  if (regioni == "region"){
+    ploti <- ploti + ylab("\nWeighted average of predicted\npositions on independence scale\n") +
+      geom_segment(x = endi - 1.75, y = 0.42, xend = endi - 1.75, yend = 0.45,
+                   arrow = arrow(length = unit(0.03, "npc"))) +
+      geom_text(label = "Less\nfederalist",
+                x = endi, y = 0.45,
+                angle = 90, size = 2.75, hjust = 1,
+                vjust = 0, lineheight = 0.7)
+  }
   assign(value = ploti, x = paste0("plot2_", regioni))
 }
 
 plot2_region / (plot2_mtl | plot2_rmr | plot2_qc +
-                 plot_layout(widths = c(0.4354839, 0.4354839, 0.1290323))) +
+                 plot_layout(widths = c(0.5, 0.5, 0.15))) +
   plot_layout(guides = 'collect') &
   plot_annotation(title = "Current Attitudes of Gen Z on Quebec Sovereignty",
                   subtitle = "By Provincial Electoral Riding",
-                  caption = "Survey data from 2021 to 2023, n = 6687. The X-axis shows the riding-wise weighted average of attitudes towards Quebec sovereignty based on a linear model and the riding's 2021 census data.\nThe dependent variable ranges from 0 to 1 where 0 indicates a strong federalist attitude and 1 indicates a strong separatist atittude.") &
+                  caption = "Survey data from 2021 to 2023, n = 6687. The Y-axis shows the riding-wise weighted average of attitudes towards Quebec sovereignty based on a linear model and the riding's 2021 census data.\nThe dependent variable ranges from 0 to 1 where 0 indicates a strong federalist attitude and 1 indicates a strong separatist atittude.") &
   guides(color = guide_colorbar(title.position = "left")) &
   theme(legend.position = "right",
         legend.title = element_text(angle = 90),
