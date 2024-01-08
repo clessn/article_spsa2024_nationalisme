@@ -8,7 +8,7 @@ library(patchwork)
 Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
   mutate(yob = year - ses_age,
          generation = case_when(
-           yob <= 1947 ~ "preboomer",
+           yob %in% 1925:1946 ~ "preboomer",
            yob %in% 1947:1961 ~ "boomer",
            yob %in% 1962:1976 ~ "x",
            yob %in% 1977:1991 ~ "y",
@@ -112,6 +112,30 @@ summary(linear_models[["1974"]])
 summary(linear_models[["2022"]])
 
 
+# Modeling without region for 1997-2000 -------------------------------------
+
+for (i in c(1997, 2000)){
+  mdata <- Data %>% 
+    filter(year == i) %>% 
+    tidyr::drop_na(iss_souv,
+                   generation,
+                   int_pol,
+                   ses_gender,
+                   ses_lang.1,
+                   ses_origin_from_canada.1,
+                   ses_family_income_centile_cat)
+  model <- lm(iss_souv ~ generation +
+                ses_gender + ses_lang.1 + ses_family_income_centile_cat +
+                ses_origin_from_canada.1 + int_pol,
+              data = mdata)
+  if (i == 1997){
+    linear_models_19972000 <- list()
+    linear_models_19972000[[as.character(i)]] <- model
+  } else {
+    linear_models_19972000[[as.character(i)]] <- model
+  }
+}
+
 # Predict models ------------------------------------------------------------------
 
 ## fix the available generations for each year
@@ -121,6 +145,8 @@ available_generations <- list(
   "1984" = c("preboomer", "boomer", "x"),
   "1988" = c("preboomer", "boomer", "x"),
   "1993" = c("preboomer", "boomer", "x"),
+  "1997" = c("preboomer", "boomer", "x"),
+  "2000" = c("preboomer", "boomer", "x"),
   "2004" = c("preboomer", "boomer", "x", "y"),
   "2008" = c("preboomer", "boomer", "x", "y"),
   "2015" = c("preboomer", "boomer", "x", "y", "z"),
@@ -143,7 +169,7 @@ for (i in 1:length(linear_models)){
                                          newdata = newdata) %>% 
     mutate(year = yeari)
   if (i == 1){
-    graphsData <- predsi 
+    graphsData <- predsi
   } else {
     graphsData <- bind_rows(graphsData, predsi)
   }
@@ -154,10 +180,38 @@ graphsData$year <- as.numeric(graphsData$year)
 
 ### graphsData contains the main data for the graphs!
 
+## Create 1997-2000 graphdata ----------------------------------------------
+
+newdata <- marginaleffects::datagrid(model = linear_models_19972000[["1997"]],
+                                     generation = available_generations[["1997"]])
+
+preds1997 <- marginaleffects::predictions(linear_models_19972000[["1997"]],
+                                       newdata = newdata) %>% 
+  mutate(year = 1997,
+         ses_geoloc.1 = "all")
+
+preds2000 <- marginaleffects::predictions(linear_models_19972000[["2000"]],
+                                          newdata = newdata) %>% 
+  mutate(year = 2000,
+         ses_geoloc.1 = "all")
+
+preds19972000 <- rbind(preds1997, preds2000)
+for (i in c("montreal", "quebec", "region", "suburbs")){
+  predsi <- preds19972000 %>% mutate(ses_geoloc.1 = i)
+  if (i == "montreal"){
+    preds19972000 <- predsi
+  } else {
+    preds19972000 <- rbind(preds19972000, predsi)
+  }
+}
+
+graphsData2 <- bind_rows(graphsData, preds19972000)
+
+
 # graphs -------------------------------------------------------------------
 
 ## squelette
-graphsData %>%
+graphsData2 %>%
   filter(generation == "boomer" &
            year != 2023) %>%
   ggplot(aes(x = year, y = estimate)) +
@@ -217,13 +271,19 @@ calculate_age_range <- function(year, birth_start = 1947, birth_end = 1961) {
 }
 
 ## squelette graphs1
-plot1 <- graphsData %>%
+plot1 <- graphsData2 %>%
   filter(generation == "boomer" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
   ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+  geom_segment(x = 1997, xend = 1997, linetype = "dotted",
+             linewidth = 0.6, color = "grey70",
+             y = 0.3, yend = 0.7) +
+  geom_segment(x = 2000, xend = 2000, linetype = "dotted",
+               linewidth = 0.6, color = "grey70",
+               y = 0.3, yend = 0.7) +
   geom_line(size = 0.5) +
   geom_point(size = 1, color = "black") +
   theme_minimal() +
@@ -235,19 +295,22 @@ plot1 <- graphsData %>%
   ) +
   scale_linetype_manual(
     values = c(
-      "montreal" = "solid", 
+      "montreal" = "longdash", 
       "quebec" = "dashed", 
       "suburbs" = "solid", 
-      "region" = "dotted"
+      "region" = "dotted",
+      "all" = "solid"
     ),
     guide = guide_legend(title = "Region type"),
-    labels = c("montreal"="Montreal", "quebec" = "Quebec City", "region"="Regions", "suburbs"="Greater Montreal Area")
+    labels = c("montreal"="Montreal", "quebec" = "Quebec City",
+               "region"="Regions", "suburbs"="Greater Montreal Area",
+               "all" = "All")
   ) +
   scale_color_manual(
     values = c(
-      "montreal" = "black", 
+      "montreal" = "grey", 
       "quebec" = "black", 
-      "suburbs" = "gray", 
+      "suburbs" = "black", 
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
@@ -318,7 +381,7 @@ plot2 <- graphsData %>%
                      labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
   ylab("\nPredicted position\non independentist scale\n") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.text.y = element_text(angle = 90, vjust = 0.5)) 
+        axis.text.y = element_text(angle = 90, vjust = 0.5, hjust = 0.5)) 
 
 print(plot2)
 
@@ -333,7 +396,7 @@ plot1_with_spacers <- plot1_with_spacers + plot_layout(widths = c(1, 5, 1))  # A
 # Layout combiné
 combined_plot <- plot1_with_spacers / plot2 +
   plot_annotation(title = "Boomer",
-                  caption = "Prediction for a boomer Francophone man from Canada, positioned in the second income quartile,\n  characterized by high political sophistication, assuming all other factors remain constant.",
+                  caption = "Prediction for a boomer Francophone man from Canada, positioned in the second income quartile, characterized by high political sophistication, assuming all other factors remain constant.\nSince there is no available geographical data for the 1997 and 2000 CES, the prediction is the same for all regions.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
 
@@ -350,13 +413,19 @@ calculate_age_rangePB <- function(year, birth_start = 1925, birth_end = 1947) {
 }
 
 ## squelette graphs1
-plot1 <- graphsData %>%
+plot1 <- graphsData2 %>%
   filter(generation == "preboomer" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
   ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+  geom_segment(x = 1997, xend = 1997, linetype = "dotted",
+               linewidth = 0.6, color = "grey70",
+               y = 0.25, yend = 0.65) +
+  geom_segment(x = 2000, xend = 2000, linetype = "dotted",
+               linewidth = 0.6, color = "grey70",
+               y = 0.25, yend = 0.65) +
   geom_line(size = 0.5) +
   geom_point(size = 1, color = "black") +
   theme_minimal() +
@@ -368,7 +437,7 @@ plot1 <- graphsData %>%
   ) +
   scale_linetype_manual(
     values = c(
-      "montreal" = "solid", 
+      "montreal" = "longdash", 
       "quebec" = "dashed", 
       "suburbs" = "solid", 
       "region" = "dotted"
@@ -378,9 +447,9 @@ plot1 <- graphsData %>%
   ) +
   scale_color_manual(
     values = c(
-      "montreal" = "black", 
+      "montreal" = "grey", 
       "quebec" = "black", 
-      "suburbs" = "gray", 
+      "suburbs" = "black", 
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
@@ -451,7 +520,7 @@ plot1_with_spacers <- plot1_with_spacers + plot_layout(widths = c(1, 5, 1))  # A
 # Layout combiné
 combined_plot <- plot1_with_spacers / plot2 +
   plot_annotation(title = "Pre-boomer",
-                  caption = "Prediction for a pre-boomer Francophone man from Canada, positioned in the second income quartile,\n characterized by high political sophistication, assuming all other factors remain constant.",
+                  caption = "Prediction for a pre-boomer Francophone man from Canada, positioned in the second income quartile, characterized by high political sophistication, assuming all other factors remain constant.\nSince there is no available geographical data for the 1997 and 2000 CES, the prediction is the same for all regions.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
 
@@ -466,13 +535,19 @@ calculate_age_rangeX <- function(year, birth_start = 1962, birth_end = 1976) {
 }
 
 ## squelette graphs1
-plot1 <- graphsData %>%
+plot1 <- graphsData2 %>%
   filter(generation == "x" & year != 2023) %>%
   mutate(
     conf.low = ifelse(conf.low < 0, 0, conf.low),
     conf.high = ifelse(conf.high > 1, 1, conf.high)
   ) %>%
   ggplot(aes(x = year, y = estimate, linetype = ses_geoloc.1, color = ses_geoloc.1)) +
+  geom_segment(x = 1997, xend = 1997, linetype = "dotted",
+               linewidth = 0.6, color = "grey70",
+               y = 0.3, yend = 0.7) +
+  geom_segment(x = 2000, xend = 2000, linetype = "dotted",
+               linewidth = 0.6, color = "grey70",
+               y = 0.3, yend = 0.7) +
   geom_line(size = 0.5) +
   geom_point(size = 1, color = "black") +
   theme_minimal() +
@@ -484,7 +559,7 @@ plot1 <- graphsData %>%
   ) +
   scale_linetype_manual(
     values = c(
-      "montreal" = "solid", 
+      "montreal" = "longdash", 
       "quebec" = "dashed", 
       "suburbs" = "solid", 
       "region" = "dotted"
@@ -494,9 +569,9 @@ plot1 <- graphsData %>%
   ) +
   scale_color_manual(
     values = c(
-      "montreal" = "black", 
+      "montreal" = "grey", 
       "quebec" = "black", 
-      "suburbs" = "gray", 
+      "suburbs" = "black", 
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
@@ -568,7 +643,7 @@ plot1_with_spacers <- plot1_with_spacers + plot_layout(widths = c(1, 5, 1))  # A
 # Layout combiné
 combined_plot <- plot1_with_spacers / plot2 +
   plot_annotation(title = "X",
-                  caption = "Prediction for a X Francophone man from Canada, positioned in the second income quartile,\n characterized by high political sophistication, assuming all other factors remain constant.",
+                  caption = "Prediction for a X Francophone man from Canada, positioned in the second income quartile, characterized by high political sophistication, assuming all other factors remain constant.\nSince there is no available geographical data for the 1997 and 2000 CES, the prediction is the same for all regions.",
                   theme = theme(plot.title = element_text(hjust = 0.5))) +
   plot_layout(heights = unit(c(7, 0.5), c('cm', 'null')))
 
@@ -601,7 +676,7 @@ plot1 <- graphsData %>%
   ) +
   scale_linetype_manual(
     values = c(
-      "montreal" = "solid", 
+      "montreal" = "longdash", 
       "quebec" = "dashed", 
       "suburbs" = "solid", 
       "region" = "dotted"
@@ -611,9 +686,9 @@ plot1 <- graphsData %>%
   ) +
   scale_color_manual(
     values = c(
-      "montreal" = "black", 
+      "montreal" = "grey", 
       "quebec" = "black", 
-      "suburbs" = "gray", 
+      "suburbs" = "black", 
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
@@ -720,7 +795,7 @@ plot1 <- graphsData %>%
   ) +
   scale_linetype_manual(
     values = c(
-      "montreal" = "solid", 
+      "montreal" = "longdash", 
       "quebec" = "dashed", 
       "suburbs" = "solid", 
       "region" = "dotted"
@@ -730,9 +805,9 @@ plot1 <- graphsData %>%
   ) +
   scale_color_manual(
     values = c(
-      "montreal" = "black", 
+      "montreal" = "grey", 
       "quebec" = "black", 
-      "suburbs" = "gray", 
+      "suburbs" = "black", 
       "region" = "black"
     ),
     guide = guide_legend(title = "Region type"),
