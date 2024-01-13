@@ -1,0 +1,213 @@
+---
+title: "Zooming on *Zoomers*"
+subtitle: "A Comprehensive Analysis of Quebec's Shifting Independence Dynamics"
+author: "<table style='margin-top: -290px; width: 100%; text-align: center;'><tr><td style='vertical-align: top; padding-right: 5px;'>Étienne Proulx<br>Hubert Cadieux<br>Alexandre Bouillon</td><td style='vertical-align: top;'>Laurence-Olivier M. Foisy<br>Yannick Dufresne</td></tr></table>"
+institute: "Université Laval"
+format:
+  revealjs:
+    theme: serif
+    logo: images/ul_logo.png
+    footer: "Zooming on *Zoomers*"
+---
+
+## Where lies the potential evolution of attitudes towards the Quebec's independence? {.center}
+
+::: {.notes}
+Let's start with the question that the article is concerned with: Where lies the potential evolution of attitudes towards the independence of Quebec? Initially, the project we were interested in was to measure the potential political biases of chatGPT towards different profiles of Quebec separatists. However, in light of our dataset, it became important for us to first make a contribution on the various profiles of Quebecers most likely to evolve in their attitudes towards independence.
+:::
+
+## A brief overview of the question of Quebec's independence and the existing literature
+### Historical Context
+The case of Quebec in Canada
+
+### Literature
+  - Life-cycle effect
+  
+  - Cohorts effect
+  
+  - Periods and event effect
+
+::: {.notes}
+Quebec has been historically marked by the existence of an independence movement and attitudes towards independence. This historical context provides a fertile ground for a rigorous contemporary analysis of independence attitudes in multinational states. Especially since historically, the question of Quebec's independence has been crucial for understanding electoral behaviors in Quebec. In recent years, the issue of independence seems to be less structuring in the Quebec political landscape. Therefore, the analysis of contemporary attitudes towards the question is important. 
+
+The recent literature on the determinants of independence attitudes has predominantly focused on the life cycle effect, cohort effects, and the effect of periods and events.
+
+The life cycle effect assumes that the young would be more pro-independence than the old, having less to lose, while the old would be less pro-independence, wanting to preserve their achievements and a certain stability. The effects of generations imply that it is rather political socialization in young adulthood that creates shaping values that generations will keep for the rest of their lives. The effects of periods and events provide a shorter-term view of political socialization and suggest that an event or period in the short term will play a role in the short-term evolution of attitudes towards independence.
+:::
+
+## Political socialization and the formation of deep-seated values during the young adult period
+
+  - Fluctuating effects of the life cycle
+  
+  - Not necessarily the project of a generation
+  
+  - Focus on political socialization during the young adult period
+
+::: {.notes}
+Fluctuating effects of the life cycle. Not necessarily the project of a generation. One of the most important and explanatory factors, however, remains the processes of political socialization during the young adult period. These processes are generally associated with events or periods that shape the evolution of political attitudes.
+:::
+
+## Question
+
+ Where lies the potential evolution of attitudes towards the Quebec's independence in the Gen Z?
+
+::: {.notes}
+Based on the theoretical assumption that one of the most explanatory factors for attitudes towards independence is political socialization during the young adult period, the article focuses on Generation Z as it is currently going through the young adult period.The question is, therefore: Where lies the potential evolution of attitudes towards the Quebec's independence in the Gen Z? We added the variable 'region' to the models in order to geographically locate the potential evolution, and because few studies on independence attitudes have done so.
+:::
+
+  
+
+
+## Methodology {auto-animate=true auto-animate-easing="ease-in-out"}
+
+
+::: {.r-hstack}
+::: {data-id="box1" auto-animate-delay="0" style="background: #3d8f73; width: 400px; height: 270px; margin: 10px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px;"}
+  **Canadian Election Studies (1974 -2021)**
+:::
+
+::: {data-id="box2" auto-animate-delay="0.1" style="background: #33b086; width: 400px; height: 270px; margin: 10px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px;"}
+  **Synopsis Surveys (Jan to Sep 2022)**
+:::
+
+::: {data-id="box3" auto-animate-delay="0.2" style="background: #25cc94; width: 400px; height: 270px; margin: 10px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px;"}
+  **Pilot Survey for Quorum Project (Aug 2023)**
+:::
+:::
+
+
+## Methodology {auto-animate=true auto-animate-easing="ease-in-out"}
+
+::: {.r-stack}
+::: {data-id="box1" style="background: #3d8f73; width: 350px; height: 350px; border-radius: 200px;"}
+
+:::
+
+::: {data-id="box2" style="background: #33b086; width: 250px; height: 250px; border-radius: 200px;"}
+
+:::
+
+::: {data-id="box3" style="background: #25cc94; width: 150px; height: 150px; border-radius: 200px; display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; padding: 20px;"}
+  <span style="font-size: 20px;">
+    **Merged**  
+    **(n = 41,845)**
+  </span>
+:::
+:::
+
+::: {.notes}
+The cleaning process was designed to enhance compatibility for integration with other surveys and the Canadian Election Studies, ensuring consistency across
+datasets. Ultimately, the dataset comprised n = 12,191 complete cases after the removal of missing data in the dependent or independent variables.
+:::
+
+## Methodology {.smaller}
+### Confirming Previous Findings
+
+  - Linear regression modeling (14 models)
+  - DV =  respondent’s perspective on Quebec’s independence
+  - IV = generational cohort, geographical region, along with control variables including political interest, gender, language, Canadian origin, and family income percentile
+  - The interaction between generation and region was specifically included to examine the varied effects of these factors
+  
+::: {.notes}
+AJOUT À LA LECTURE DE LA SLIDE: Participants were classified into distinct generational cohorts. This categorization was aligned with the age groups defined in the 2021 Canadian Census data to facilitate the analysis of prevailing attitudes
+:::
+
+## Methodology {.smaller}
+### Current attitudes and Zoom on *Zoomers*
+
+  - Data from 2021 to 2023 (n = 6,687)
+  - Interaction term incorporating generation, region, and language
+  - Same DV and IV than the precedent models
+
+
+::: {.notes}
+
+:::
+
+## Methodology {.smaller}
+
+:::: {.columns}
+::: {.column width="40%"}
+
+### By ridings
+
+  - Creating a post-stratification table using the 2021 Canadian
+    Census Data organized by ridings
+  
+:::
+::: {.column width="40%"}
+### By categories of regions
+
+  - Grouping ridings into categories of regions
+  - Montreal, Greater Montreal Area (GMA), Quebec City, and other regions
+
+:::
+::::
+::: {.notes}
+The post-stratification table is the table containing the weights of each zoomer by riding. The regression model was applied to each stratum of the post-stratification table,
+facilitating interpretation at both the ridings and regional levels. Predictions could then
+be aggregated as a weighted average across various population segments, whether at the
+ridings or regional level.
+:::
+
+## Results {.smaller}
+
+![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_preboomer.png)
+
+::: {.notes}
+Notes
+:::
+
+## Results {.smaller}
+
+![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_boomer.png)
+
+::: {.notes}
+Notes
+:::
+
+## Results {.smaller}
+
+![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_x.png)
+
+::: {.notes}
+Notes
+:::
+
+## Results {.smaller}
+
+![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_y.png)
+
+::: {.notes}
+Notes
+:::
+
+## Results {.smaller}
+
+![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_z.png)
+
+::: {.notes}
+Notes
+:::
+
+## Results {.smaller}
+
+![](SharedFolder_spsa_article_nationalisme/graphs/models/potgrowth/aggregate/facet_generation.png)
+## Results {.smaller}
+
+![](SharedFolder_spsa_article_nationalisme/graphs/zoomer_by_riding_wide.png)
+
+## Limitations
+- Linguistic limitations
+- Prompt engineering
+- No context
+- Relying on the GPS alone
+
+## Conclusion
+Is ChatGPT able to provide reliable and trustworthy information regarding the ideological positioning of political parties?
+- Highly subjective.
+- Yes? Only if we're able to understand the limitations.
+
+::: {.notes}
+Notes
+:::
