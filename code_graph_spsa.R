@@ -369,17 +369,17 @@ old_gen_graphs_facet <- function(data){
   return(plot)
 }
 
-#fonctions text size
+
 adjust_text_size <- function(plot) {
   plot + 
     theme(
-      text = element_text(size = 14),  # Taille de base pour tout le texte
-      axis.title = element_text(size = 16),  # Taille pour les titres des axes
-      axis.text = element_text(size = 12),  # Taille pour le texte des axes
-      legend.title = element_text(size = 16),  # Taille pour les titres de légende
-      legend.text = element_text(size = 14),  # Taille pour le texte de légende
-      plot.title = element_text(size = 20, face = "bold"),  # Taille pour le titre du graphique
-      plot.subtitle = element_text(size = 18)  # Taille pour le sous-titre du graphique
+      text = element_text(size = 16),  # Taille de base pour tout le texte
+      axis.title = element_text(size = 18),  # Taille pour les titres des axes
+      axis.text = element_text(size = 16),  # Taille pour le texte des axes
+      legend.title = element_text(size = 18),  # Taille pour les titres de légende
+      legend.text = element_text(size = 16),  # Taille pour le texte de légende
+      plot.title = element_text(size = 22, face = "bold"),  # Taille pour le titre du graphique
+      plot.subtitle = element_text(size = 20)  # Taille pour le sous-titre du graphique
     )
 }
 
@@ -417,7 +417,7 @@ plot2 <- graphsData %>%
   ) %>%
   old_gen_graphs_facet(.)
 print(plot2)
-plot2 <- adjust_text_size(plot2)
+
 ## combinaison des graphss
 # Sous-layout pour plot1 avec des espaces de chaque côté
 plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
@@ -436,7 +436,9 @@ ggsave(plot = combined_plot,
        filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_boomer.png", 
        width = 12, height = 8)
 
-
+ggsave(plot = plot1,
+       filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_boomer_spsa.png", 
+       width = 12, height = 8)
 
 ## preboomer ------------------------------------------------------------------
 calculate_age_rangePB <- function(year, birth_start = 1925, birth_end = 1947) {
@@ -462,8 +464,8 @@ for (year in break_years) {
     annotate("text", x = year, y = 0, label = age_label, vjust = 7, hjust = 0.5, size = 2.5)
 }
 
-plot1
 plot1 <- adjust_text_size(plot1)
+
 ## squelette graphs2
 plot2 <- graphsData %>%
   filter(generation == "preboomer" & year != 2023) %>%
@@ -474,7 +476,7 @@ plot2 <- graphsData %>%
   old_gen_graphs_facet(.)
 
 print(plot2)
-plot2 <- adjust_text_size(plot2)
+
 ## combinaison des graphss
 # Sous-layout pour plot1 avec des espaces de chaque côté
 plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
@@ -492,6 +494,9 @@ combined_plot <- plot1_with_spacers / plot2 +
 ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_preboomer.png", 
        plot = combined_plot, width = 12, height = 8)
 
+ggsave(plot = plot1,
+       filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_preboomer_spsa.png", 
+       width = 12, height = 8)
 ## x ------------------------------------------------------------------
 calculate_age_rangeX <- function(year, birth_start = 1962, birth_end = 1976) {
   age_start = year - birth_end
@@ -519,8 +524,8 @@ for (year in break_years) {
 }
 
 print(plot1)
-plot1 <- adjust_text_size(plot1)
 
+plot1 <- adjust_text_size(plot1)
 ## squelette graphs2
 plot2 <- graphsData %>%
   filter(generation == "x" & year != 2023) %>%
@@ -550,6 +555,10 @@ combined_plot <- plot1_with_spacers / plot2 +
 
 ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_x.png", 
        plot = combined_plot, width = 12, height = 8)
+
+ggsave(plot = plot1,
+       filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_x_spsa.png", 
+       width = 12, height = 8)
 
 ## y ------------------------------------------------------------------
 calculate_age_rangeY <- function(year, birth_start = 1977, birth_end = 1991) {
@@ -612,8 +621,8 @@ for (year in break_years) {
 }
 
 print(plot1)
-plot1 <- adjust_text_size(plot1)
 
+plot1 <- adjust_text_size(plot1)
 ## squelette graphs2
 plot2 <- graphsData %>%
   filter(generation == "y" & year != 2023) %>%
@@ -650,7 +659,7 @@ plot2 <- graphsData %>%
         axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
 print(plot2)
-plot2 <- adjust_text_size(plot2)
+
 ## combinaison des graphss
 # Sous-layout pour plot1 avec des espaces de chaque côté
 plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
@@ -668,6 +677,10 @@ combined_plot <- plot1_with_spacers / plot2 +
 
 ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_y.png", 
        plot = combined_plot, width = 12, height = 8)
+
+ggsave(plot = plot1,
+       filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_y_spsa.png", 
+       width = 12, height = 8)
 
 ## z ------------------------------------------------------------------
 calculate_age_range_Z <- function(year, birth_start = 1992, birth_end = 2003) {
@@ -769,7 +782,7 @@ plot2 <- graphsData %>%
         axis.text.y = element_text(angle = 90, hjust = 0.5)) 
 
 print(plot2)
-plot2 <- adjust_text_size(plot2)
+
 ## combinaison des graphss
 # Sous-layout pour plot1 avec des espaces de chaque côté
 plot1_with_spacers <- plot_spacer() | plot1 | plot_spacer()
@@ -788,3 +801,6 @@ combined_plot <- plot1_with_spacers / plot2 +
 ggsave(filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_z.png", 
        plot = combined_plot, width = 12, height = 8)
 
+ggsave(plot = plot1,
+       filename = "SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_z_spsa.png", 
+       width = 12, height = 8)

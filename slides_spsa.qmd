@@ -1,16 +1,16 @@
 ---
 title: "Zooming on *Zoomers*"
 subtitle: "A Comprehensive Analysis of Quebec's Shifting Independence Dynamics"
-author: "<table style='margin-top: -290px; width: 100%; text-align: center;'><tr><td style='vertical-align: top; padding-right: 5px;'>Étienne Proulx<br>Hubert Cadieux<br>Alexandre Bouillon</td><td style='vertical-align: top;'>Laurence-Olivier M. Foisy<br>Yannick Dufresne</td></tr></table>"
+author: "<table style='margin-top: -290px; width: 100%; text-align: center;'><tr><td style='vertical-align: top; padding-right: 5px;'>Étienne Proulx<br>Alexandre Bouillon<br>Laurence-Olivier M. Foisy</td><td style='vertical-align: top;'>Hubert Cadieux<br>Yannick Dufresne</td></tr></table>"
 institute: "Université Laval"
 format:
   revealjs:
     theme: serif
-    logo: images/ul_logo.png
+    logo: images/ul_logo_spsa.png
     footer: "Zooming on *Zoomers*"
 ---
 
-## Where lies the potential evolution of attitudes towards the Quebec's independence? {.center}
+## Where lies the potential evolution of attitudes towards Quebec's independence? {.center}
 
 ::: {.notes}
 Let's start with the question that the article is concerned with: Where lies the potential evolution of attitudes towards the independence of Quebec? Initially, the project we were interested in was to measure the potential political biases of chatGPT towards different profiles of Quebec separatists. However, in light of our dataset, it became important for us to first make a contribution on the various profiles of Quebecers most likely to evolve in their attitudes towards independence.
@@ -49,7 +49,7 @@ Fluctuating effects of the life cycle. Not necessarily the project of a generati
 
 ## Question
 
- Where lies the potential evolution of attitudes towards the Quebec's independence in the Gen Z?
+ Where lies the potential evolution of attitudes towards Quebec's independence in the Gen Z?
 
 ::: {.notes}
 Based on the theoretical assumption that one of the most explanatory factors for attitudes towards independence is political socialization during the young adult period, the article focuses on Generation Z as it is currently going through the young adult period.The question is, therefore: Where lies the potential evolution of attitudes towards the Quebec's independence in the Gen Z? We added the variable 'region' to the models in order to geographically locate the potential evolution, and because few studies on independence attitudes have done so.
@@ -71,7 +71,7 @@ Based on the theoretical assumption that one of the most explanatory factors for
 :::
 
 ::: {data-id="box3" auto-animate-delay="0.2" style="background: #25cc94; width: 400px; height: 270px; margin: 10px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px;"}
-  **Pilot Survey for Quorum Project (Aug 2023)**
+  **Pilot Survey from Quorum Project (Aug 2023)**
 :::
 :::
 
@@ -150,63 +150,105 @@ be aggregated as a weighted average across various population segments, whether 
 ridings or regional level.
 :::
 
-## Results {.smaller}
+## Results
 
-![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_preboomer.png)
+----
 
-::: {.notes}
-Notes
-:::
-
-## Results {.smaller}
-
-![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_boomer.png)
+![Pre-Boomer Generation](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_preboomer_spsa.png)
 
 ::: {.notes}
-Notes
+The five following graphs focus on the evolution of independentist attitudes over time and concentrate on confirming previous studies. I will go through these graphs more quickly as they are not directly relevant to the research question.
+
+Overall, these graphs indeed confirm recent studies showing that it's not only the boomers who carry the question of Quebec's independence. The graphs also show that the life cycle effect should be put into perspective since the independentist attitudes of boomers or pre-boomers do not necessarily diminish over time. We can also observe the effect of different periods.
+
+For pre-boomers, boomers, and Generation X, we observe a marked evolution of political attitudes during their young adult period. For Generations Y and Z, our data do not allow us to observe a pronounced evolution of attitudes towards independence. There are no pronounced effects of regions when taking into account the error margins, which do not appear on the presented graphs.
 :::
 
-## Results {.smaller}
+----
 
-![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_x.png)
+![Boomer Generation](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_boomer_spsa.png)
 
 ::: {.notes}
-Notes
+The five following graphs focus on the evolution of independentist attitudes over time and concentrate on confirming previous studies. I will go through these graphs more quickly as they are not directly relevant to the research question.
+
+Overall, these graphs indeed confirm recent studies showing that it's not only the boomers who carry the question of Quebec's independence. The graphs also show that the life cycle effect should be put into perspective since the independentist attitudes of boomers or pre-boomers do not necessarily diminish over time. We can also observe the effect of different periods.
+
+For pre-boomers, boomers, and Generation X, we observe a marked evolution of political attitudes during their young adult period. For Generations Y and Z, our data do not allow us to observe a pronounced evolution of attitudes towards independence. There are no pronounced effects of regions when taking into account the error margins, which do not appear on the presented graphs.
 :::
 
-## Results {.smaller}
+----
 
-![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_y.png)
+![Generation X](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_x_spsa.png)
 
 ::: {.notes}
-Notes
+The five following graphs focus on the evolution of independentist attitudes over time and concentrate on confirming previous studies. I will go through these graphs more quickly as they are not directly relevant to the research question.
+
+Overall, these graphs indeed confirm recent studies showing that it's not only the boomers who carry the question of Quebec's independence. The graphs also show that the life cycle effect should be put into perspective since the independentist attitudes of boomers or pre-boomers do not necessarily diminish over time. We can also observe the effect of different periods.
+
+For pre-boomers, boomers, and Generation X, we observe a marked evolution of political attitudes during their young adult period. For Generations Y and Z, our data do not allow us to observe a pronounced evolution of attitudes towards independence. There are no pronounced effects of regions when taking into account the error margins, which do not appear on the presented graphs.
 :::
 
-## Results {.smaller}
+----
 
-![](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_z.png)
+
+![Generation Y](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_y_spsa.png)
 
 ::: {.notes}
-Notes
+The five following graphs focus on the evolution of independentist attitudes over time and concentrate on confirming previous studies. I will go through these graphs more quickly as they are not directly relevant to the research question.
+
+Overall, these graphs indeed confirm recent studies showing that it's not only the boomers who carry the question of Quebec's independence. The graphs also show that the life cycle effect should be put into perspective since the independentist attitudes of boomers or pre-boomers do not necessarily diminish over time. We can also observe the effect of different periods.
+
+For pre-boomers, boomers, and Generation X, we observe a marked evolution of political attitudes during their young adult period. For Generations Y and Z, our data do not allow us to observe a pronounced evolution of attitudes towards independence. There are no pronounced effects of regions when taking into account the error margins, which do not appear on the presented graphs.
 :::
 
-## Results {.smaller}
+----
+
+
+![Generation Z](SharedFolder_spsa_article_nationalisme/graphs/models/evolution/plot_z_spsa.png)
+
+::: {.notes}
+The five following graphs focus on the evolution of independentist attitudes over time and concentrate on confirming previous studies. I will go through these graphs more quickly as they are not directly relevant to the research question.
+
+Overall, these graphs indeed confirm recent studies showing that it's not only the boomers who carry the question of Quebec's independence. The graphs also show that the life cycle effect should be put into perspective since the independentist attitudes of boomers or pre-boomers do not necessarily diminish over time. We can also observe the effect of different periods.
+
+For pre-boomers, boomers, and Generation X, we observe a marked evolution of political attitudes during their young adult period. For Generations Y and Z, our data do not allow us to observe a pronounced evolution of attitudes towards independence. There are no pronounced effects of regions when taking into account the error margins, which do not appear on the presented graphs.
+:::
+
+
+----
 
 ![](SharedFolder_spsa_article_nationalisme/graphs/models/potgrowth/aggregate/facet_generation.png)
-## Results {.smaller}
+
+::: {.notes}
+The current graph is interesting for clearly visualizing the current attitudes of different generations. What particularly interests us is Generation Z, as we theoretically assume that the current attitudes of other generations will not be as subject to evolution.
+
+We observe a depolarization of attitudes towards independence among different linguistic groups. A pivotal observation within Generation Z is the significant tendency of Allophones and Anglophones in the Greater Montreal Area (GMA) to have attitudes that are as, if not less, federalist than Francophones.
+:::
+
+----
 
 ![](SharedFolder_spsa_article_nationalisme/graphs/zoomer_by_riding_wide.png)
 
+::: {.notes}
+In the broader regions, the homogeneity of the data points suggests views on sovereignty that are relatively aligned in these areas. These views correspond to a moderate federalism. Transitioning to Montreal, a discernible trend emerges where ridings with a denser Generation Z population exhibit a tendency towards a more relaxed federalism. In the Greater Montreal Area, the graph reflects a similar pattern of uncertainty in ridings with fewer Generation Z constituents. 
+
+Interestingly, GMA is identified as having a higher likelihood of separatist leanings among Generation Z. Here, the support for federalism is broadly in line with that of Montreal’s ridings, with a notable exception in areas such as Jean-Talon, where a denser Generation Z population correlates with a stronger federalist sentiment. 
+
+The data collectively signify that while Generation Z’s disposition across Quebec leans towards federalism, the intensity of this inclination is modulated by the proportion of Gen Z residents, particularly in urban areas.
+:::
+
 ## Limitations
-- Linguistic limitations
-- Prompt engineering
-- No context
-- Relying on the GPS alone
+- The generational boundaries are somewhat arbitrary because their definition is influenced by the alignment with census data
+- Generational groups as clean-cut groups
+- The assumption that similar demographic segments in different ridings within the same region will yield identical predictions
+
 
 ## Conclusion
-Is ChatGPT able to provide reliable and trustworthy information regarding the ideological positioning of political parties?
-- Highly subjective.
-- Yes? Only if we're able to understand the limitations.
+Where lies the potential evolution of attitudes towards Quebec's independence in the Gen Z?
+
+  - Among Zoomers, the GMA is less attached to federalism
+  - Few differences between Zoomers' linguistic profiles in terms of how they feel about independence
+
 
 ::: {.notes}
 Notes
