@@ -61,7 +61,7 @@ plot_theme <- function(){
     #xlab("\nWeighted average of predicted\npositions on independence scale\n"),
     xlab(""),
     ylab(""),
-    clessnverse::theme_clean_light(),
+    clessnize::theme_clean_light(),
     scale_color_gradient(name = "Weight of Gen Z\nin riding (%)",
                          low = "grey95", high = "black",
                          breaks = c(12:16),
@@ -97,7 +97,7 @@ plot_region + (plot_mtl / plot_rmr / plot_qc +
   plot_layout(guides = 'collect') &
   plot_annotation(title = "Current Attitudes of Gen Z on Quebec Sovereignty",
                   subtitle = "By Provincial Electoral Riding",
-                  caption = "Survey data from 2021 to 2023, n = 6687. The X-axis shows the riding-wise weighted average of\nattitudes towards Quebec sovereignty based on a linear model and the riding's 2021 census data.") &
+                  caption = "Survey data from 2021 to 2023, n = 1117. The X-axis shows the riding-wise weighted average of\nattitudes towards Quebec sovereignty based on a linear model and the riding's 2021 census data.") &
   guides(color = guide_colorbar(title.position = "top")) &
   theme(legend.position = "bottom",
         plot.caption = element_text(hjust = 0.2, face = "italic"),
@@ -117,7 +117,7 @@ plot_theme2 <- function(end){
     #xlab("\nWeighted average of predicted\npositions on independence scale\n"),
     xlab(""),
     ylab(""),
-    clessnverse::theme_clean_light(),
+    clessnize::theme_clean_light(),
     scale_color_gradient(name = "Weight of Gen Z\nin riding (%)",
                          low = "grey95", high = "black",
                          breaks = c(12:16),
@@ -165,7 +165,7 @@ plot2_region / (plot2_mtl | plot2_rmr | plot2_qc +
   plot_layout(guides = 'collect') &
   plot_annotation(title = "Current Attitudes of Gen Z on Quebec Sovereignty",
                   subtitle = "By Provincial Electoral Riding",
-                  caption = "Survey data from 2021 to 2023, n = 6687. The Y-axis shows the riding-wise weighted average of attitudes towards Quebec sovereignty based on a linear model and the riding's 2021 census data.\nThe dependent variable ranges from 0 to 1 where 0 indicates a strong federalist attitude and 1 indicates a strong separatist atittude.") &
+                  caption = "Survey data from 2021 to 2023, n = 1117. The Y-axis shows the riding-wise weighted average of attitudes towards Quebec sovereignty based on a linear model and the riding's 2021 census data.\nThe dependent variable ranges from 0 to 1 where 0 indicates a strong federalist attitude and 1 indicates a strong separatist atittude.") &
   guides(color = guide_colorbar(title.position = "left")) &
   theme(legend.position = "right",
         legend.title = element_text(angle = 90),
