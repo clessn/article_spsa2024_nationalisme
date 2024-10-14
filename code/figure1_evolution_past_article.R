@@ -280,13 +280,13 @@ calculate_age_range(2022, birth_year_range$z[1], birth_year_range$z[2])
 calculate_age_range(1980, birth_year_range$boomer[1], birth_year_range$boomer[2])
 
 generation_plot <- function(gen_highlight){
+  graph_data <- as.data.frame(graphsData2) |> 
+    mutate(highlight = ifelse(generation == gen_highlight, "yes", "no"))
   lab_y <- ifelse(gen_highlight == "preboomer", "Predicted Position on\nIndependentist Scale", "\n")
   # Add age labels
   break_start <- min(graph_data$year[graph_data$generation == gen_highlight])
   break_start <- round(break_start / 5) * 5
   break_years <- seq(from = break_start, to = 2020, by = 5)
-  graph_data <- as.data.frame(graphsData2) |> 
-    mutate(highlight = ifelse(generation == gen_highlight, "yes", "no"))
   plot <- ggplot(
     data = graph_data,
     aes(

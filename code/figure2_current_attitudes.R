@@ -1,2 +1,140 @@
 # show how language is not the same predictor among different generations
 
+# Packages ----------------------------------------------------------------
+library(dplyr)
+library(ggplot2)
+
+# Data -------------------------------------------------------------------
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
+  filter(year >= 2021) |> 
+  mutate(yob = year - ses_age,
+         generation = case_when(
+           yob %in% 1925:1946 ~ "preboomer",
+           yob %in% 1947:1961 ~ "boomer",
+           yob %in% 1962:1976 ~ "x",
+           yob %in% 1977:1991 ~ "y",
+           yob %in% 1992:2003 ~ "z"
+         ),
+         generation = factor(generation))
+
+table(data$iss_souv2)
+table(data$iss_souv2, data$year)
+### Selon le sondage, on a 4 ou 5 niveaux likert
+### On va donc tester 2 lm et les comparer:
+#### 1. en assignant de façon random les neutres à une position nuancée
+#### 2. en faisant une lm sur la variable raw
+
+## VD 1
+set.seed(123)
+data$vd1 <- data$iss_souv2
+data$vd1 <- ifelse(data$vd1 == 0.25, 0.33,
+                   ifelse(data$vd1 == 0.75, 0.66, data$vd1))
+data$vd1[!is.na(data$vd1) & data$vd1 == 0.5] <- sample(
+  c(0.33, 0.66),
+  size = sum(!is.na(data$vd1) & data$vd1 == 0.5),
+  replace = TRUE
+)
+table(data$vd1)
+
+## VD 2
+data$vd2 <- data$iss_souv2
+data$vd2[data$vd2 == 0.33] <- 0.25
+data$vd2[data$vd2 == 0.66] <- 0.75
+table(data$vd2)
+
+# Functions --------------------------------------------------------------
+
+create_model <- function(
+  data,
+  vd
+){
+  data$vd <- data[[vd]]
+  model_data <- data |> 
+    select(
+      vd,
+      generation, ses_lang.1,
+      ses_gender,
+      ses_family_income_centile_cat,
+      ses_origin_from_canada.1,
+      ses_educ
+    ) |> 
+    tidyr::drop_na()
+  model <- lm(
+    vd ~ generation * ses_lang.1 + .,
+    data = model_data
+  )
+  return(model)
+}
+
+create_figure2 <- function(
+  data, vd
+){
+  model <- create_model(
+    data, vd
+  )
+
+  preds <- marginaleffects::predictions(
+    model = model,
+    newdata = marginaleffects::datagrid(
+      model = model,
+      generation = c("preboomer", "boomer", "x", "y", "z"),
+      ses_lang.1 = c("english", "french", "other")
+    )
+  ) |> 
+    mutate(
+      generation = factor(
+        generation,
+        levels = c("preboomer", "boomer", "x", "y", "z"),
+        labels = c("Preboomer", "Boomer", "X", "Y", "Z")
+      ),
+      ses_lang.1 = factor(
+        ses_lang.1,
+        levels = c("french", "english", "other"),
+        labels = c("French", "English", "Other")
+      )
+    )
+
+  ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
+    facet_wrap(~generation, nrow = 1) +
+    geom_linerange(aes(ymin = conf.low, ymax = conf.high)) +
+    geom_point() +
+    scale_color_manual(
+      values = c(
+        "French" = "black",
+        "English" = "grey30",
+        "Other" = "grey60"
+      )
+    ) +
+    clessnize::theme_clean_light() +
+    xlab("") +
+    labs(
+      caption = "Estimated average marginal effects of generation and language on the predicted position\non the independentist scale, controlling for all other variables."
+    ) +
+    scale_y_continuous(
+      limits = c(0, 1),
+      breaks = c(0.1, 0.9),
+      labels = c("More\nFederalist", "More\nSeparatist"),
+      name = "Predicted Position on\nIndependentist Scale\n"
+    ) +
+    guides(color = "none") +
+    theme(
+      panel.grid.major.y = element_blank(),
+      axis.text.y = element_text(angle = 90, hjust = 0.5),
+      panel.background = element_rect(fill = NA, color = "grey75"),
+      plot.caption = element_text(hjust = 1)
+    )
+}
+
+# Graph and save -------------------------------------------------------------------
+
+create_figure2(data, "vd1")
+ggsave(
+  "SharedFolder_spsa_article_nationalisme/figures/figure2_language_effect_by_generation_4point.png",
+  width = 9, height = 6
+)
+
+create_figure2(data, "vd2")
+ggsave(
+  "SharedFolder_spsa_article_nationalisme/figures/figure2_language_effect_by_generation_5point.png",
+  width = 9, height = 6
+)
