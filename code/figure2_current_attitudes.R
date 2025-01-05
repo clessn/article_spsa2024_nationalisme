@@ -72,6 +72,7 @@ create_figure2 <- function(
   model <- create_model(
     data, vd
   )
+  print(nrow(model$model))
 
   preds <- marginaleffects::predictions(
     model = model,
@@ -93,6 +94,8 @@ create_figure2 <- function(
         labels = c("French", "English", "Other")
       )
     )
+  
+  print(as.data.frame(preds))
 
   ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
     facet_wrap(~generation, nrow = 1) +
@@ -108,18 +111,35 @@ create_figure2 <- function(
     clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = "Estimated average marginal effects of generation and language on the predicted position\non the independentist scale, controlling for all other variables."
+      caption = paste0("Predicted position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", nrow(model$model), ".")
     ) +
     scale_y_continuous(
       limits = c(0, 1),
-      breaks = c(0.1, 0.9),
-      labels = c("More\nFederalist", "More\nSeparatist"),
-      name = "Predicted Position on\nIndependentist Scale\n"
+      breaks = c(0, 0.25, 0.5, 0.75, 1),
+      expand = c(0, 0),
+      #labels = c("More\nFederalist", "", "", "", "More\nSeparatist"),
+      name = "Predicted Position on\nIndependence Scale\n"
+    ) +
+    annotate(
+      geom = "text",
+      x = 0.725, y = 0.99,
+      label = "More\nSeparatist",
+      hjust = 1, angle = 90,
+      size = 2.25
+    ) +
+    annotate(
+      geom = "text",
+      x = 0.725, y = 0.01,
+      label = "More\nFederalist",
+      hjust = 0, angle = 90,
+      size = 2.25
     ) +
     guides(color = "none") +
     theme(
-      panel.grid.major.y = element_blank(),
-      axis.text.y = element_text(angle = 90, hjust = 0.5),
+      panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),
+      #axis.text.y = element_text(angle = 90, hjust = 0.5),
+      axis.text.y = element_blank(),
+      strip.text.x = element_text(size = 12),
       panel.background = element_rect(fill = NA, color = "grey75"),
       plot.caption = element_text(hjust = 1)
     )
