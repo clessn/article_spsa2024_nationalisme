@@ -366,7 +366,7 @@ generation_plot("preboomer") +
   generation_plot("z") +
   plot_layout(design = design) +
   plot_annotation(
-    caption = "Prediction for a Francophone man from Canada, positioned in the second income quartile, characterized by high political sophistication, assuming all other factors remain constant.\nDiamonds indicate that the question about Quebec's Independance was asked on a likert scale ; circles on a dichotomous scale"
+    caption = paste0("Prediction for a Francophone man from Canada, positioned in the second income quartile, characterized by high political sophistication, assuming all other factors remain constant.\nDiamonds indicate that the question about Quebec's Independance was asked on a likert scale ; circles on a dichotomous scale. n = ", nrow(completecases))
 ) &
   theme(plot.caption = element_text(family = "Roboto"))
 
