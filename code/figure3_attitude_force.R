@@ -86,17 +86,19 @@ ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
     clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = "Estimated average marginal effects of generation and language on the predicted attitude strength\non the independentist scale, controlling for all other variables."
+      caption = paste0("Predicted probability of having an strong position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", nrow(model$model), ".")
     ) +
     scale_y_continuous(
       limits = c(0, 1),
       breaks = c(0, 0.25, 0.5, 0.75, 1),
       labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)),
+      expand = c(0, 0),
       name = "Probability of Strong Attitude\non Independentist Scale\n"
     ) +
     guides(color = "none") +
     theme(
-      panel.grid.major.y = element_blank(),
+      panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),
+      strip.text.x = element_text(size = 12),
       panel.background = element_rect(fill = NA, color = "grey75"),
       plot.caption = element_text(hjust = 1)
     )

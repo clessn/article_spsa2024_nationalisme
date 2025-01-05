@@ -125,14 +125,14 @@ create_figure2 <- function(
       x = 0.725, y = 0.99,
       label = "More\nSeparatist",
       hjust = 1, angle = 90,
-      size = 2.25
+      size = 2.25, lineheight = 0.75
     ) +
     annotate(
       geom = "text",
       x = 0.725, y = 0.01,
       label = "More\nFederalist",
       hjust = 0, angle = 90,
-      size = 2.25
+      size = 2.25, lineheight = 0.75
     ) +
     guides(color = "none") +
     theme(
