@@ -70,8 +70,8 @@ preds <- marginaleffects::predictions(
     conf.high = ifelse(conf.high > 1, 1, conf.high),
     iss_idcan = factor(
       iss_idcan,
-      levels = c(0, 1),
-      labels = c("Quebecois\nbefore", "Canadian\nbefore")
+      levels = rev(c(0, 1)),
+      labels = rev(c("Québécois\nbefore", "Canadian\nbefore\n"))
     )
   )
 
@@ -94,14 +94,14 @@ ggplot(
     ) +
     scale_shape_manual(
       values = c(
-        "Quebecois\nbefore" = 23,
-        "Canadian\nbefore" = 22
+        "Québécois\nbefore" = 23,
+        "Canadian\nbefore\n" = 22
       )
     ) +
     clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = "Estimated average marginal effects of generation and language on the predicted attitude strength\non the independentist scale, controlling for all other variables."
+      caption = paste0("Predicted probability of having an strong position on the independence scale with interaction between generation and national primary identification\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2022, n = ", nrow(model$model), ".")
     ) +
     scale_y_continuous(
       limits = c(0, 1),
@@ -109,10 +109,19 @@ ggplot(
       labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)),
       name = "Probability of Strong Attitude\non Independentist Scale\n"
     ) +
-    guides(color = "none") +
+    guides(
+      color = "none",
+      shape = guide_legend(title = "National Primary\nIdentification") 
+    ) +
     theme(
       panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),
-      plot.caption = element_text(hjust = 1)
+      plot.caption = element_text(hjust = 1),
+      plot.caption.position = "plot",
+      axis.text.x = element_text(size = 12),
+      legend.title = element_text(size = 9, hjust = 0.5),
+      legend.title.position = "top",
+      legend.position = "right",
+      legend.spacing.x = unit(10, "cm")
     )
 
 ggsave(
