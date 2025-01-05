@@ -71,7 +71,7 @@ preds <- marginaleffects::predictions(
     iss_idcan = factor(
       iss_idcan,
       levels = c(0, 1),
-      labels = c("Quebecois before", "Canadian before")
+      labels = c("Quebecois\nbefore", "Canadian\nbefore")
     )
   )
 
@@ -81,19 +81,21 @@ ggplot(
     x = generation,
     y = estimate,
     group = iss_idcan,
-    color = iss_idcan
+    shape = iss_idcan
   )) +
     geom_linerange(
       aes(ymin = conf.low, ymax = conf.high),
-      position = position_dodge(width = 0.2)
+      position = position_dodge(width = 0.2),
+      color = "grey30"
     ) +
     geom_point(
-      position = position_dodge(width = 0.2)
+      position = position_dodge(width = 0.2),
+      fill = "black", size = 3
     ) +
-    scale_color_manual(
+    scale_shape_manual(
       values = c(
-        "Quebecois before" = "darkblue",
-        "Canadian before" = "darkred"
+        "Quebecois\nbefore" = 23,
+        "Canadian\nbefore" = 22
       )
     ) +
     clessnize::theme_clean_light() +
@@ -109,8 +111,7 @@ ggplot(
     ) +
     guides(color = "none") +
     theme(
-      panel.grid.major.y = element_blank(),
-      panel.background = element_rect(fill = NA, color = "grey75"),
+      panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),
       plot.caption = element_text(hjust = 1)
     )
 
