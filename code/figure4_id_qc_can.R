@@ -16,10 +16,10 @@ data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
            yob %in% 1977:1991 ~ "y",
            yob %in% 1992:2003 ~ "z"
          ),
-         generation = factor(generation))
+         generation = factor(generation)) |>
+  tidyr::drop_na(generation, iss_idcan)
 
 data |> 
-  tidyr::drop_na(generation, iss_idcan) |> 
   group_by(generation, iss_idcan) |> 
   summarise(
     n = n()
@@ -51,10 +51,10 @@ data |>
     limits = c(0.45, 0.75),
     breaks = seq(0, 100, by = 10)/100,
     labels = scales::percent(seq(0, 100, by = 10)/100),
-    name = "\nProportion of respondents identifying as Quebecois before Canadian\n"
+    name = "\nProportion of respondents identifying as Québécois before Canadian\n"
   ) +
   ylab("") +
-  labs(caption = "Caption ici") +
+  labs(caption = paste0("Proportion of respondents identifying as Québécois before Canadian, by generation,\nwith 95% confidence intervals. Data from 2022, n = ", nrow(data), ".")) +
   geom_text(
     aes(
       x = prop,
