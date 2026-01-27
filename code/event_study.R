@@ -23,6 +23,7 @@ library(marginaleffects)  # pour calculs d'effets marginaux
 library(patchwork)        # pour combiner graphiques
 library(tibble)           # pour tribble
 library(broom)            # pour tidy model outputs
+library(fwildclusterboot) # pour wild cluster bootstrap avec <30 clusters
 
 # Créer directories pour outputs si elles n'existent pas
 dir.create("SharedFolder_spsa_article_nationalisme/graphs/event_study",
@@ -194,17 +195,31 @@ message("Event times disponibles:", paste(unique(model_data_pooled$event_time), 
 
 # Modèle pooled: utiliser post_event comme indicateur binaire
 # Plus simple et robuste que event_time car on n'a pas toujours t=0
+# CRITICAL: Cluster par year (pas event_name) pour avoir plus de clusters
 model_pooled <- feols(
   iss_souv2 ~ post_event * generation +
               event_name +
               ses_lang.1 + ses_geoloc.1 + ses_gender +
               ses_family_income_centile_cat + ses_origin_from_canada.1 + int_pol,
   data = model_data_pooled,
-  cluster = ~event_name
+  cluster = ~year
 )
 
 message("Modèle pooled estimé avec succès")
 print(summary(model_pooled))
+
+# Wild cluster bootstrap pour inference robuste avec <30 clusters
+message("\nRunning wild cluster bootstrap for pooled model (this may take a few minutes)...")
+boot_pooled_post <- boottest(
+  model_pooled,
+  param = "post_event",
+  clustid = "year",
+  B = 9999,
+  type = "mammen"
+)
+
+message("Bootstrap completed:")
+print(boot_pooled_post)
 
 # AUSSI: Modèle avec event_time interagit (pour event-study plot)
 # Utiliser la première année pré-événement comme référence
@@ -217,7 +232,7 @@ model_pooled_eventstudy <- feols(
               ses_lang.1 + ses_geoloc.1 + ses_gender +
               ses_family_income_centile_cat + ses_origin_from_canada.1 + int_pol,
   data = model_data_pooled,
-  cluster = ~event_name
+  cluster = ~year
 )
 
 message("Modèle event-study estimé avec succès")
@@ -271,8 +286,21 @@ for (i in 1:nrow(events_treatment)) {
         cluster = ~year
       )
 
-      models_by_event[[event_i]] <- model_i
-      message("  ✓ Modèle estimé")
+      # Wild cluster bootstrap pour ce modèle
+      message("  Running wild bootstrap...")
+      boot_i <- boottest(
+        model_i,
+        param = "post_event",
+        clustid = "year",
+        B = 9999,
+        type = "mammen"
+      )
+
+      models_by_event[[event_i]] <- list(
+        model = model_i,
+        bootstrap = boot_i
+      )
+      message("  ✓ Modèle estimé avec bootstrap")
     }, error = function(e) {
       message(paste("  ✗ Erreur dans estimation:", e$message))
       models_by_event[[event_i]] <- NULL
@@ -294,7 +322,7 @@ message("\n6.3 Modèles sans contrôles (robustesse)...")
 model_pooled_nocontrols <- feols(
   iss_souv2 ~ post_event * generation + event_name,
   data = model_data_pooled,
-  cluster = ~event_name
+  cluster = ~year
 )
 
 message("Modèle pooled sans contrôles estimé")
@@ -341,8 +369,21 @@ for (i in 1:nrow(events_placebo)) {
         cluster = ~year
       )
 
-      models_placebo[[event_i]] <- model_i
-      message("  ✓ Modèle placebo estimé")
+      # Wild cluster bootstrap pour placebo
+      message("  Running wild bootstrap...")
+      boot_i <- boottest(
+        model_i,
+        param = "post_event",
+        clustid = "year",
+        B = 9999,
+        type = "mammen"
+      )
+
+      models_placebo[[event_i]] <- list(
+        model = model_i,
+        bootstrap = boot_i
+      )
+      message("  ✓ Modèle placebo estimé avec bootstrap")
     }, error = function(e) {
       message(paste("  ✗ Erreur:", e$message))
       models_placebo[[event_i]] <- NULL
@@ -395,15 +436,39 @@ write.csv(coef_pooled,
 
 ## 8.2 Table A2: Post-event effects par événement -----------------------------
 
-extract_post_effect <- function(model, event_name) {
-  if (is.null(model)) {
+extract_post_effect <- function(model_list, event_name) {
+  if (is.null(model_list)) {
     return(NULL)
   }
 
-  # Extraire coefficient post_event
-  coef_df <- broom::tidy(model, conf.int = TRUE) %>%
+  # Extraire modèle et bootstrap (nouvelle structure)
+  if (is.list(model_list) && "model" %in% names(model_list)) {
+    model <- model_list$model
+    boot <- model_list$bootstrap
+  } else {
+    # Fallback si ancien format (juste le modèle)
+    model <- model_list
+    boot <- NULL
+  }
+
+  # Extraire coefficient post_event du modèle
+  coef_df <- broom::tidy(model) %>%
     filter(term == "post_event") %>%
-    mutate(event_name = event_name) %>%
+    select(estimate, std.error, statistic, p.value)
+
+  # Si bootstrap disponible, utiliser CIs bootstrap
+  if (!is.null(boot)) {
+    coef_df$conf.low <- boot$conf_int[1]
+    coef_df$conf.high <- boot$conf_int[2]
+    coef_df$p.value <- boot$p_val
+  } else {
+    # Fallback: CIs standard
+    coef_df$conf.low <- coef_df$estimate - 1.96 * coef_df$std.error
+    coef_df$conf.high <- coef_df$estimate + 1.96 * coef_df$std.error
+  }
+
+  coef_df$event_name <- event_name
+  coef_df <- coef_df %>%
     select(event_name, estimate, std.error, statistic, p.value, conf.low, conf.high)
 
   return(coef_df)
@@ -437,8 +502,74 @@ write.csv(coef_placebo,
           "SharedFolder_spsa_article_nationalisme/tables/event_study/table_a3_placebo.csv",
           row.names = FALSE)
 
-# 9. VISUALIZATIONS ------------------------------------------------------------
+## 8.4 Table A5: Parallel Trends Tests ----------------------------------------
 
+message("\n\n========== PARALLEL TRENDS TESTS ==========\n")
+
+# Test formel de parallel trends sur le modèle pooled event-study
+message("Testing parallel trends assumption...")
+
+# Extraire coefficients pré-événement
+pre_coefs <- coef_pooled %>%
+  filter(event_time < 0, event_time != ref_time)
+
+message(paste("\nNombre de périodes pré-événement:", nrow(pre_coefs)))
+message("Coefficients pré-événement:")
+print(pre_coefs %>% select(event_time, estimate, p.value))
+
+# Test simple: compter combien de coefs pré-événement sont significatifs
+n_significant_pre <- sum(pre_coefs$p.value < 0.05, na.rm = TRUE)
+n_total_pre <- sum(!is.na(pre_coefs$p.value))
+
+message(paste("\nRésultat du test:"))
+message(paste("  - Coefficients pré-événement significatifs (p<0.05):", n_significant_pre, "sur", n_total_pre))
+
+if (n_significant_pre == 0) {
+  message("  ✓ Parallel trends VALIDÉE: aucun coefficient pré-événement significatif")
+} else if (n_significant_pre <= n_total_pre * 0.05) {
+  message("  ✓ Parallel trends PLAUSIBLE: <5% de coefficients significatifs (cohérent avec taux d'erreur Type I)")
+} else {
+  message("  ⚠ Parallel trends DOUTEUSE: >5% de coefficients pré-événement significatifs")
+}
+
+# Test statistique sur l'amplitude moyenne des coefs pré-événement
+mean_pre_coef <- mean(abs(pre_coefs$estimate), na.rm = TRUE)
+mean_post_coef <- mean(abs(coef_pooled$estimate[coef_pooled$event_time > 0]), na.rm = TRUE)
+
+message(paste("\nAmplitude moyenne des coefficients:"))
+message(paste("  - Pré-événement:", round(mean_pre_coef, 4)))
+message(paste("  - Post-événement:", round(mean_post_coef, 4)))
+message(paste("  - Ratio post/pré:", round(mean_post_coef / mean_pre_coef, 2)))
+
+# Créer table de résultats
+parallel_trends_results <- data.frame(
+  test = "Parallel Trends (Pre-event coefficients)",
+  n_pre_periods = n_total_pre,
+  n_significant = n_significant_pre,
+  prop_significant = round(n_significant_pre / n_total_pre, 3),
+  mean_abs_pre_coef = round(mean_pre_coef, 4),
+  mean_abs_post_coef = round(mean_post_coef, 4),
+  ratio_post_pre = round(mean_post_coef / mean_pre_coef, 2),
+  conclusion = ifelse(
+    n_significant_pre == 0,
+    "Parallel trends validated",
+    ifelse(
+      n_significant_pre <= n_total_pre * 0.05,
+      "Parallel trends plausible",
+      "Parallel trends violated"
+    )
+  )
+)
+
+message("\nRésultats sauvegardés dans table_a5_parallel_trends.csv")
+write.csv(parallel_trends_results,
+          "SharedFolder_spsa_article_nationalisme/tables/event_study/table_a5_parallel_trends.csv",
+          row.names = FALSE)
+
+# 9. VISUALIZATIONS ------------------------------------------------------------
+# TEMPORAIREMENT DÉSACTIVÉ POUR TESTER LES MODÈLES D'ABORD
+
+if (FALSE) {
 message("\n\n========== CRÉATION DES VISUALISATIONS ==========\n")
 
 ## 9.1 Event-study plot (pooled) ----------------------------------------------
@@ -492,9 +623,16 @@ message("  ✓ Event-study plot sauvegardé")
 message("9.2 Trajectoires par événement...")
 
 # Pour chaque événement, calculer les prédictions moyennes pré/post
-create_trajectory_data <- function(event_name, model) {
-  if (is.null(model)) {
+create_trajectory_data <- function(event_name, model_list) {
+  if (is.null(model_list)) {
     return(NULL)
+  }
+
+  # Extraire modèle (nouvelle structure avec bootstrap)
+  if (is.list(model_list) && "model" %in% names(model_list)) {
+    model <- model_list$model
+  } else {
+    model <- model_list
   }
 
   # Prédictions pour post = 0 et post = 1, moyenné sur autres variables
@@ -560,9 +698,16 @@ if (!is.null(trajectory_data) && nrow(trajectory_data) > 0) {
 message("9.3 Heatmap génération × événement...")
 
 # Extraire effets post-event par génération pour chaque événement
-extract_gen_effects <- function(model, event_name) {
-  if (is.null(model)) {
+extract_gen_effects <- function(model_list, event_name) {
+  if (is.null(model_list)) {
     return(NULL)
+  }
+
+  # Extraire modèle (nouvelle structure avec bootstrap)
+  if (is.list(model_list) && "model" %in% names(model_list)) {
+    model <- model_list$model
+  } else {
+    model <- model_list
   }
 
   # Calculer effet post pour chaque génération
@@ -664,6 +809,111 @@ if (!is.null(coef_placebo) && nrow(coef_placebo) > 0) {
 } else {
   message("  ✗ Pas de données pour placebo plot")
 }
+
+## 9.5 Event-specific plots with generation lines -----------------------------
+
+message("9.5 Graphiques par événement × génération...")
+
+# Pour chaque événement treatment, créer un graphique montrant l'évolution
+# du support à l'indépendance par génération autour de l'événement
+
+for (i in 1:nrow(events_treatment)) {
+  event_name_i <- events_treatment$event_name[i]
+  event_year_i <- events_treatment$event_year[i]
+
+  message(paste("\n  Création graphique pour:", event_name_i))
+
+  # Filtrer données pour cet événement
+  data_event_i <- event_data_pooled %>%
+    filter(event_name == event_name_i,
+           !is.na(iss_souv2),
+           !is.na(generation))
+
+  # Vérifier qu'il y a assez de données
+  if (nrow(data_event_i) < 50) {
+    message(paste("  ✗ Pas assez de données pour", event_name_i))
+    next
+  }
+
+  # Calculer moyennes par event_time × generation
+  plot_data_event <- data_event_i %>%
+    group_by(event_time, generation) %>%
+    summarise(
+      mean_souv = mean(iss_souv2, na.rm = TRUE),
+      se_souv = sd(iss_souv2, na.rm = TRUE) / sqrt(n()),
+      n_obs = n(),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      # CIs approximatifs (basés sur SE)
+      ci_low = mean_souv - 1.96 * se_souv,
+      ci_high = mean_souv + 1.96 * se_souv
+    )
+
+  # Créer le graphique
+  p_event <- ggplot(plot_data_event,
+                    aes(x = event_time, y = mean_souv,
+                        color = generation, fill = generation)) +
+    # Ligne verticale à l'événement
+    geom_vline(xintercept = 0, linetype = "dashed", color = "black", linewidth = 1) +
+    # Ligne horizontale au niveau moyen pré-événement
+    geom_hline(yintercept = mean(plot_data_event$mean_souv[plot_data_event$event_time < 0]),
+               linetype = "dotted", color = "gray50") +
+    # Ribbons pour CIs
+    geom_ribbon(aes(ymin = ci_low, ymax = ci_high), alpha = 0.15, color = NA) +
+    # Lignes et points
+    geom_line(linewidth = 1.2) +
+    geom_point(size = 2.5) +
+    # Annotation de l'événement
+    annotate("text", x = 0, y = max(plot_data_event$ci_high, na.rm = TRUE),
+             label = paste0("EVENT\n", event_year_i),
+             vjust = -0.5, fontface = "bold", size = 3.5) +
+    # Échelle de couleurs
+    scale_color_brewer(palette = "Set1", name = "Generation") +
+    scale_fill_brewer(palette = "Set1", name = "Generation") +
+    # Labels
+    labs(
+      title = paste0("Event-Study: ", event_name_i, " (", event_year_i, ")"),
+      subtitle = "Independence support by generation around constitutional event",
+      x = "Years Relative to Event",
+      y = "Mean Independence Support (0-1 scale)",
+      caption = paste0(
+        "Note: Lines show mean support by generation. ",
+        "Shaded areas represent 95% confidence intervals.\n",
+        "Vertical dashed line marks the event. ",
+        "Horizontal dotted line shows pre-event mean."
+      )
+    ) +
+    # Thème
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 13),
+      plot.subtitle = element_text(size = 10),
+      plot.caption = element_text(hjust = 0, size = 8, color = "gray30"),
+      legend.position = "bottom",
+      legend.title = element_text(face = "bold"),
+      panel.grid.minor = element_blank()
+    )
+
+  # Nom de fichier sécurisé (remplacer espaces et caractères spéciaux)
+  filename_safe <- gsub(" ", "_", tolower(event_name_i))
+  filename_safe <- gsub("[^a-z0-9_-]", "", filename_safe)
+  filename <- paste0("SharedFolder_spsa_article_nationalisme/graphs/event_study/",
+                     "event", i, "_", filename_safe, "_by_generation.png")
+
+  # Sauvegarder
+  ggsave(
+    filename,
+    plot = p_event,
+    width = 10, height = 6, dpi = 300
+  )
+
+  message(paste("  ✓ Graphique sauvegardé:", basename(filename)))
+}
+
+message("\n  ✓ Tous les graphiques événement × génération créés")
+
+} # Fin du if(FALSE) pour visualisations
 
 # 10. ROBUSTNESS TABLE ---------------------------------------------------------
 
