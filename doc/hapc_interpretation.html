@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>hapc_interpretation</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="hapc_interpretation_files/libs/clipboard/clipboard.min.js"></script>
+<script src="hapc_interpretation_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="hapc_interpretation_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="hapc_interpretation_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="hapc_interpretation_files/libs/quarto-html/popper.min.js"></script>
+<script src="hapc_interpretation_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="hapc_interpretation_files/libs/quarto-html/anchor.min.js"></script>
+<link href="hapc_interpretation_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="hapc_interpretation_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="hapc_interpretation_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="hapc_interpretation_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="hapc_interpretation_files/libs/bootstrap/bootstrap-7080c9a905c963c37aa58afeb2a6fc57.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="interprétation-des-analyses-supplémentaires-event-study-did-et-hapc" class="level1">
+<h1>Interprétation des analyses supplémentaires: Event Study DiD et HAPC</h1>
+<p>Ce document présente les résultats des analyses complémentaires réalisées pour l’article “Zooming in on Zoomers” et leur interprétation dans le contexte de l’argument principal.</p>
+<hr>
+<section id="event-study-difference-in-differences" class="level2">
+<h2 class="anchored" data-anchor-id="event-study-difference-in-differences">1. Event Study Difference-in-Differences</h2>
+<section id="objectif" class="level3">
+<h3 class="anchored" data-anchor-id="objectif">Objectif</h3>
+<p>Fournir des preuves quasi-expérimentales que les événements constitutionnels <em>causent</em> des changements d’attitudes envers la souveraineté, en comparant des événements “traitement” (crises constitutionnelles réelles) à des événements “placebo” (périodes sans crise majeure).</p>
+</section>
+<section id="design" class="level3">
+<h3 class="anchored" data-anchor-id="design">Design</h3>
+<ul>
+<li><strong>Événements traitement</strong>: Référendum 1980, Meech Lake 1990, Référendum 1995, Commandites 2005</li>
+<li><strong>Événements placebo</strong>: 2012 et 2020</li>
+<li><strong>Modèle</strong>: <code>iss_souv ~ post_event * generation + ses_lang.1</code></li>
+<li><strong>Méthode</strong>: Effets marginaux moyens par génération via <code>marginaleffects</code></li>
+</ul>
+</section>
+<section id="résultats-événements-traitement" class="level3">
+<h3 class="anchored" data-anchor-id="résultats-événements-traitement">Résultats: Événements traitement</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 15%">
+<col style="width: 26%">
+<col style="width: 16%">
+<col style="width: 11%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Événement</th>
+<th>Génération</th>
+<th>Effet post-événement</th>
+<th>Erreur-type</th>
+<th>p-value</th>
+<th>Significatif</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Référendum 1980</strong></td>
+<td>Preboomer</td>
+<td>+0.172</td>
+<td>0.023</td>
+<td>&lt;0.001</td>
+<td>Oui</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Boomer</td>
+<td>+0.137</td>
+<td>0.029</td>
+<td>&lt;0.001</td>
+<td>Oui</td>
+</tr>
+<tr class="odd">
+<td><strong>Meech Lake 1990</strong></td>
+<td>Preboomer</td>
+<td>+0.082</td>
+<td>0.030</td>
+<td>0.007</td>
+<td>Oui</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Boomer</td>
+<td>+0.071</td>
+<td>0.030</td>
+<td>0.018</td>
+<td>Oui</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>X</td>
+<td>+0.057</td>
+<td>0.049</td>
+<td>0.249</td>
+<td>Non</td>
+</tr>
+<tr class="even">
+<td><strong>Référendum 1995</strong></td>
+<td>Preboomer</td>
+<td>+0.053</td>
+<td>0.029</td>
+<td>0.066</td>
+<td>Marginal</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Boomer</td>
+<td>-0.025</td>
+<td>0.027</td>
+<td>0.357</td>
+<td>Non</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>X</td>
+<td>-0.021</td>
+<td>0.036</td>
+<td>0.562</td>
+<td>Non</td>
+</tr>
+<tr class="odd">
+<td><strong>Commandites 2005</strong></td>
+<td>Preboomer</td>
+<td>+0.012</td>
+<td>0.029</td>
+<td>0.686</td>
+<td>Non</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Boomer</td>
+<td>+0.010</td>
+<td>0.027</td>
+<td>0.726</td>
+<td>Non</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>X</td>
+<td>-0.002</td>
+<td>0.030</td>
+<td>0.944</td>
+<td>Non</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Y</td>
+<td>-0.043</td>
+<td>0.046</td>
+<td>0.353</td>
+<td>Non</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Constats clés:</strong> 1. Seul le <strong>référendum de 1980</strong> montre des effets forts et significatifs (+0.14 à +0.17 sur l’échelle 0-1) 2. <strong>Meech Lake 1990</strong> montre des effets modérés pour les générations plus âgées uniquement 3. Le <strong>référendum de 1995</strong> ne montre pas d’effet positif significatif 4. Le <strong>scandale des commandites</strong> ne montre aucun effet détectable</p>
+</section>
+<section id="résultats-événements-placebo" class="level3">
+<h3 class="anchored" data-anchor-id="résultats-événements-placebo">Résultats: Événements placebo</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 15%">
+<col style="width: 26%">
+<col style="width: 16%">
+<col style="width: 11%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Événement</th>
+<th>Génération</th>
+<th>Effet post-événement</th>
+<th>Erreur-type</th>
+<th>p-value</th>
+<th>Significatif</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Placebo 2012</strong></td>
+<td>Preboomer</td>
+<td>+0.033</td>
+<td>0.027</td>
+<td>0.234</td>
+<td>Non</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Boomer</td>
+<td>-0.005</td>
+<td>0.021</td>
+<td>0.808</td>
+<td>Non</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>X</td>
+<td>-0.058</td>
+<td>0.023</td>
+<td>0.010</td>
+<td>Oui (négatif)</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Y</td>
+<td>-0.097</td>
+<td>0.027</td>
+<td>&lt;0.001</td>
+<td>Oui (négatif)</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Z</td>
+<td>+0.085</td>
+<td>0.119</td>
+<td>0.476</td>
+<td>Non</td>
+</tr>
+<tr class="even">
+<td><strong>Placebo 2020</strong></td>
+<td>Preboomer</td>
+<td>+0.049</td>
+<td>0.022</td>
+<td>0.028</td>
+<td>Marginal</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Boomer</td>
+<td>+0.036</td>
+<td>0.011</td>
+<td>&lt;0.001</td>
+<td>Oui</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>X</td>
+<td>-0.037</td>
+<td>0.012</td>
+<td>0.001</td>
+<td>Oui (négatif)</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Y</td>
+<td>-0.085</td>
+<td>0.013</td>
+<td>&lt;0.001</td>
+<td>Oui (négatif)</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Z</td>
+<td>-0.116</td>
+<td>0.018</td>
+<td>&lt;0.001</td>
+<td>Oui (négatif)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Constats clés:</strong> 1. Les placebos ne sont <strong>pas neutres</strong> comme attendu 2. Les générations X, Y et Z montrent des <strong>déclins significatifs</strong> pendant ces périodes 3. La Gen Z montre le déclin le plus prononcé (-0.116) lors du placebo 2020 4. Les Boomers montrent une légère hausse (+0.036) pendant la même période</p>
+</section>
+<section id="test-des-parallel-trends" class="level3">
+<h3 class="anchored" data-anchor-id="test-des-parallel-trends">Test des Parallel Trends</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 34%">
+<col style="width: 16%">
+<col style="width: 11%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Événement</th>
+<th>Coefficient pré-événement</th>
+<th>Erreur-type</th>
+<th>p-value</th>
+<th>Parallel trends?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Référendum 1980</td>
+<td>+0.019</td>
+<td>0.028</td>
+<td>0.491</td>
+<td>Oui</td>
+</tr>
+<tr class="even">
+<td>Meech Lake 1990</td>
+<td>-0.015</td>
+<td>0.027</td>
+<td>0.594</td>
+<td>Oui</td>
+</tr>
+<tr class="odd">
+<td>Référendum 1995</td>
+<td>-0.068</td>
+<td>0.028</td>
+<td>0.016</td>
+<td><strong>Non</strong></td>
+</tr>
+<tr class="even">
+<td>Commandites 2005</td>
+<td>-0.063</td>
+<td>0.025</td>
+<td>0.011</td>
+<td><strong>Non</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>2 sur 4 événements violent l’hypothèse de parallel trends</strong>, ce qui affaiblit l’interprétation causale pour 1995 et 2005.</p>
+<hr>
+</section>
+</section>
+<section id="analyse-hapc-ccrem" class="level2">
+<h2 class="anchored" data-anchor-id="analyse-hapc-ccrem">2. Analyse HAPC-CCREM</h2>
+<section id="objectif-1" class="level3">
+<h3 class="anchored" data-anchor-id="objectif-1">Objectif</h3>
+<p>Résoudre le “problème d’identification APC” en séparant formellement les effets d’âge, de période et de cohorte via un modèle à effets aléatoires croisés (Yang &amp; Land, 2008).</p>
+</section>
+<section id="modèle" class="level3">
+<h3 class="anchored" data-anchor-id="modèle">Modèle</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glmer</span>(iss_souv <span class="sc">~</span> age_scaled <span class="sc">+</span> <span class="fu">I</span>(age_scaled<span class="sc">^</span><span class="dv">2</span>) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>generation) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>year_factor),</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> data, <span class="at">family =</span> binomial)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Effets fixes</strong>: Âge (quadratique)</li>
+<li><strong>Effets aléatoires croisés</strong>: Génération (cohorte) et Année (période)</li>
+<li><strong>N</strong> = 36,102 observations</li>
+<li><strong>Groupes</strong>: 5 générations × 18 années</li>
+</ul>
+</section>
+<section id="décomposition-de-la-variance" class="level3">
+<h3 class="anchored" data-anchor-id="décomposition-de-la-variance">Décomposition de la variance</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Source</th>
+<th>Variance</th>
+<th>% du total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Cohorte (génération)</td>
+<td>0.099</td>
+<td><strong>2.7%</strong></td>
+</tr>
+<tr class="even">
+<td>Période (année)</td>
+<td>0.240</td>
+<td><strong>6.6%</strong></td>
+</tr>
+<tr class="odd">
+<td>Résiduel (π²/3)</td>
+<td>3.290</td>
+<td>90.7%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interprétation:</strong> - La période explique <strong>2.4 fois plus</strong> de variance que la cohorte - Les deux effets restent modestes par rapport à la variance inexpliquée - La majorité de la variation (90.7%) est attribuable à des facteurs individuels non modélisés</p>
+</section>
+<section id="tests-de-rapport-de-vraisemblance" class="level3">
+<h3 class="anchored" data-anchor-id="tests-de-rapport-de-vraisemblance">Tests de rapport de vraisemblance</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Comparaison</th>
+<th>χ²</th>
+<th>df</th>
+<th>p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Modèle complet vs.&nbsp;sans cohorte</td>
+<td>381.59</td>
+<td>1</td>
+<td>&lt;2.2e-16</td>
+</tr>
+<tr class="even">
+<td>Modèle complet vs.&nbsp;sans période</td>
+<td>827.12</td>
+<td>1</td>
+<td>&lt;2.2e-16</td>
+</tr>
+</tbody>
+</table>
+<p>Les deux effets sont <strong>hautement significatifs</strong>, mais l’effet période contribue davantage au modèle.</p>
+</section>
+<section id="effets-aléatoires-de-cohorte-génération" class="level3">
+<h3 class="anchored" data-anchor-id="effets-aléatoires-de-cohorte-génération">Effets aléatoires de cohorte (génération)</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Génération</th>
+<th>Effet aléatoire</th>
+<th>Interprétation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Preboomer</td>
+<td>-0.246</td>
+<td>Moins souverainiste que la moyenne</td>
+</tr>
+<tr class="even">
+<td><strong>Boomer</strong></td>
+<td><strong>+0.433</strong></td>
+<td><strong>Plus souverainiste</strong></td>
+</tr>
+<tr class="odd">
+<td>X</td>
+<td>+0.206</td>
+<td>Modérément souverainiste</td>
+</tr>
+<tr class="even">
+<td>Y</td>
+<td>+0.009</td>
+<td>Essentiellement neutre</td>
+</tr>
+<tr class="odd">
+<td><strong>Z</strong></td>
+<td><strong>-0.398</strong></td>
+<td><strong>Plus fédéraliste</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interprétation:</strong> - Les Boomers sont la génération la plus souverainiste, contrôlant pour l’âge et la période - La Gen Z est la plus fédéraliste, avec un effet comparable en magnitude mais de signe opposé aux Boomers - La Gen Y est essentiellement neutre - L’écart Boomer-Gen Z est de <strong>0.83 points</strong> sur l’échelle logit</p>
+</section>
+<section id="effets-aléatoires-de-période-année" class="level3">
+<h3 class="anchored" data-anchor-id="effets-aléatoires-de-période-année">Effets aléatoires de période (année)</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Année</th>
+<th>Effet</th>
+<th>Contexte historique</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1968</td>
+<td>-0.936</td>
+<td>Pré-mouvement souverainiste moderne</td>
+</tr>
+<tr class="even">
+<td>1974</td>
+<td>-0.808</td>
+<td>Élection PQ 1976 à venir</td>
+</tr>
+<tr class="odd">
+<td>1979</td>
+<td>-0.912</td>
+<td>Avant référendum 1980</td>
+</tr>
+<tr class="even">
+<td>1984</td>
+<td>-0.054</td>
+<td>Post-référendum 1980</td>
+</tr>
+<tr class="odd">
+<td>1988</td>
+<td>-0.039</td>
+<td>Avant Meech Lake</td>
+</tr>
+<tr class="even">
+<td><strong>1993</strong></td>
+<td><strong>+0.164</strong></td>
+<td>Post-échec Meech/Charlottetown</td>
+</tr>
+<tr class="odd">
+<td><strong>1997</strong></td>
+<td><strong>+0.366</strong></td>
+<td>Post-référendum 1995</td>
+</tr>
+<tr class="even">
+<td>2000</td>
+<td>+0.098</td>
+<td>Début scandale commandites</td>
+</tr>
+<tr class="odd">
+<td>2004</td>
+<td>+0.298</td>
+<td>Commission Gomery</td>
+</tr>
+<tr class="even">
+<td>2006</td>
+<td>+0.172</td>
+<td>Post-Gomery</td>
+</tr>
+<tr class="odd">
+<td>2008</td>
+<td>+0.310</td>
+<td>Maintien du soutien</td>
+</tr>
+<tr class="even">
+<td>2011</td>
+<td>+0.120</td>
+<td>Déclin progressif</td>
+</tr>
+<tr class="odd">
+<td>2015</td>
+<td>+0.139</td>
+<td>Légère stabilisation</td>
+</tr>
+<tr class="even">
+<td>2019</td>
+<td>-0.068</td>
+<td>Gouvernement CAQ</td>
+</tr>
+<tr class="odd">
+<td>2021</td>
+<td>+0.230</td>
+<td>Hausse post-pandémie</td>
+</tr>
+<tr class="even">
+<td>2022</td>
+<td>-0.180</td>
+<td>Déclin</td>
+</tr>
+<tr class="odd">
+<td><strong>2023</strong></td>
+<td><strong>+1.051</strong></td>
+<td><strong>Forte hausse</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Constats clés:</strong> 1. Les années 1990 (post-Meech, post-1995) montrent les effets positifs les plus forts de la période pré-2023 2. L’effet 2023 (+1.05) est exceptionnellement élevé - à investiguer (contexte politique CAQ? débats linguistiques?) 3. Les années récentes (2019-2022) montrent une volatilité accrue</p>
+</section>
+<section id="effet-de-lâge-fixe" class="level3">
+<h3 class="anchored" data-anchor-id="effet-de-lâge-fixe">Effet de l’âge (fixe)</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Paramètre</th>
+<th>Coefficient</th>
+<th>Erreur-type</th>
+<th>p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Intercept</td>
+<td>-0.682</td>
+<td>0.188</td>
+<td>&lt;0.001</td>
+</tr>
+<tr class="even">
+<td>Âge (linéaire)</td>
+<td>-0.020</td>
+<td>0.041</td>
+<td>0.620</td>
+</tr>
+<tr class="odd">
+<td>Âge² (quadratique)</td>
+<td>+0.101</td>
+<td>0.014</td>
+<td>&lt;0.001</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interprétation:</strong> - L’effet linéaire de l’âge n’est pas significatif une fois les effets de cohorte et période contrôlés - L’effet quadratique est significatif: la relation âge-souveraineté suit une courbe en U - Les très jeunes et très vieux sont légèrement moins souverainistes que les adultes d’âge moyen</p>
+<hr>
+</section>
+</section>
+<section id="implications-pour-larticle" class="level2">
+<h2 class="anchored" data-anchor-id="implications-pour-larticle">3. Implications pour l’article</h2>
+<section id="ce-qui-est-confirmé-par-les-analyses" class="level3">
+<h3 class="anchored" data-anchor-id="ce-qui-est-confirmé-par-les-analyses">Ce qui est confirmé par les analyses</h3>
+<ol type="1">
+<li><strong>Les Boomers sont la génération la plus souverainiste</strong> (+0.43 effet cohorte)
+<ul>
+<li>Cohérent avec l’argument de socialisation politique pendant les années formatrices (1960s-1970s)</li>
+</ul></li>
+<li><strong>La Gen Z est la plus fédéraliste</strong> (-0.40 effet cohorte)
+<ul>
+<li>Confirme le constat central de l’article</li>
+</ul></li>
+<li><strong>Les deux types d’effets (cohorte et période) sont statistiquement significatifs</strong>
+<ul>
+<li>Valide l’approche théorique intégrant socialisation générationnelle ET contexte historique</li>
+</ul></li>
+<li><strong>Les effets de période montrent des pics autour des crises constitutionnelles (1993, 1997)</strong>
+<ul>
+<li>Cohérent avec la littérature citée (Yale &amp; Durand, Vallée-Dubois et al.)</li>
+</ul></li>
+</ol>
+</section>
+<section id="ce-qui-nuance-ou-complique-le-récit" class="level3">
+<h3 class="anchored" data-anchor-id="ce-qui-nuance-ou-complique-le-récit">Ce qui nuance ou complique le récit</h3>
+<ol type="1">
+<li><strong>Seul le référendum de 1980 montre des effets causaux clairs dans l’event study</strong>
+<ul>
+<li>Le référendum 1995 et le scandale des commandites ne montrent pas d’effets significatifs</li>
+<li>Cela affaiblit l’argument que ces événements ont “cristallisé” les attitudes</li>
+</ul></li>
+<li><strong>Les périodes “placebo” montrent des déclins actifs chez les jeunes générations</strong>
+<ul>
+<li>Ce n’est pas une simple “absence d’activation” du soutien souverainiste</li>
+<li>C’est un <strong>déclin séculaire actif</strong> chez les X, Y et Z</li>
+<li>Suggère des forces structurelles au-delà de l’absence d’événements mobilisateurs</li>
+</ul></li>
+<li><strong>L’hypothèse de parallel trends est violée pour 1995 et 2005</strong>
+<ul>
+<li>L’interprétation causale de ces événements est fragilisée</li>
+<li>Les tendances différentielles pré-existaient aux événements</li>
+</ul></li>
+<li><strong>La période explique plus que la cohorte (6.6% vs 2.7%)</strong>
+<ul>
+<li>Suggère que les attitudes sont plus sensibles au contexte actuel qu’aux expériences formatrices</li>
+<li>Mais les deux restent modestes face à la variance inexpliquée (90.7%)</li>
+</ul></li>
+<li><strong>L’effet période 2023 est exceptionnellement élevé (+1.05)</strong>
+<ul>
+<li>Suggère un changement récent significatif à investiguer</li>
+<li>Potentiellement lié au contexte politique actuel (CAQ, loi 96, débats linguistiques)</li>
+</ul></li>
+</ol>
+</section>
+<section id="recommandations-pour-la-discussion" class="level3">
+<h3 class="anchored" data-anchor-id="recommandations-pour-la-discussion">Recommandations pour la discussion</h3>
+<p>L’article pourrait intégrer ces nuances ainsi:</p>
+<blockquote class="blockquote">
+<p>“Des analyses complémentaires utilisant un design difference-in-differences (Annexe X) révèlent que seul le référendum de 1980 montre des effets causaux clairs sur les attitudes souverainistes. Contrairement à nos attentes, le référendum de 1995 et le scandale des commandites ne montrent pas d’effets post-événement significatifs, et les périodes sans événements constitutionnels majeurs (2012, 2020) sont associées à des déclins significatifs du soutien souverainiste chez les générations X, Y et Z. Une analyse HAPC-CCREM (Annexe Y) confirme que les effets de cohorte et de période sont tous deux statistiquement significatifs, avec la période expliquant environ 2.4 fois plus de variance que la cohorte. Les Boomers demeurent la génération la plus souverainiste (+0.43 sur l’échelle logit) tandis que la Gen Z est la plus fédéraliste (-0.40). Ces résultats suggèrent que la neutralité de la Gen Z reflète non seulement l’absence d’événements mobilisateurs pendant leurs années formatrices, mais aussi un déclin séculaire actif du soutien souverainiste parmi les jeunes générations.”</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="comparaison-avec-vallée-dubois-dassonneville-godbout-2020" class="level2">
+<h2 class="anchored" data-anchor-id="comparaison-avec-vallée-dubois-dassonneville-godbout-2020">4. Comparaison avec Vallée-Dubois, Dassonneville &amp; Godbout (2020)</h2>
+<p>Notre analyse HAPC s’inscrit dans la continuité méthodologique de l’article “About time: age, period, and cohort effects on support for Quebec sovereignty” (Nations and Nationalism, 2020). Cette comparaison permet de situer nos résultats dans la littérature existante.</p>
+<section id="méthodologie-commune" class="level3">
+<h3 class="anchored" data-anchor-id="méthodologie-commune">Méthodologie commune</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 56%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Aspect</th>
+<th>Vallée-Dubois et al.&nbsp;(2020)</th>
+<th>Notre étude</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Modèle</td>
+<td>CCREM (Cross-Classified Random Effects)</td>
+<td>HAPC-CCREM (glmer)</td>
+</tr>
+<tr class="even">
+<td>Période</td>
+<td>1985-2012</td>
+<td>1968-2023</td>
+</tr>
+<tr class="odd">
+<td>N</td>
+<td>22,607</td>
+<td>36,102</td>
+</tr>
+<tr class="even">
+<td>Population</td>
+<td>Francophones du Québec</td>
+<td>Tous Québécois</td>
+</tr>
+<tr class="odd">
+<td>VD</td>
+<td>Binaire (souveraineté vs autres options)</td>
+<td>Binaire (iss_souv 0/1)</td>
+</tr>
+<tr class="even">
+<td>Effets fixes</td>
+<td>Âge (linéaire)</td>
+<td>Âge (quadratique)</td>
+</tr>
+<tr class="odd">
+<td>Effets aléatoires</td>
+<td>Cohortes (5 ans) × Périodes (années)</td>
+<td>Générations × Années</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="décomposition-de-la-variance-niveau-2-seulement" class="level3">
+<h3 class="anchored" data-anchor-id="décomposition-de-la-variance-niveau-2-seulement">Décomposition de la variance (niveau 2 seulement)</h3>
+<p>Vallée-Dubois et al.&nbsp;calculent la proportion de variance au niveau 2 (excluant la variance résiduelle π²/3):</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Source</th>
+<th>Vallée-Dubois et al.</th>
+<th>Notre étude</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Cohorte</td>
+<td>13.8%</td>
+<td>29.2%</td>
+</tr>
+<tr class="even">
+<td>Période</td>
+<td><strong>86.2%</strong></td>
+<td><strong>70.8%</strong></td>
+</tr>
+<tr class="odd">
+<td>Ratio période/cohorte</td>
+<td>6.2:1</td>
+<td>2.4:1</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interprétation:</strong> - Les deux études confirment la <strong>dominance des effets de période</strong> sur les effets de cohorte - Notre étude trouve un ratio période/cohorte plus faible (2.4:1 vs 6.2:1) - Cette différence peut s’expliquer par: 1. Définition des cohortes (5 ans vs générations) 2. Période d’étude étendue (inclut Gen Z, absente en 2012) 3. Échantillon différent (tous Québécois vs francophones seulement)</p>
+</section>
+<section id="convergence-des-résultats-sur-les-cohortes" class="level3">
+<h3 class="anchored" data-anchor-id="convergence-des-résultats-sur-les-cohortes">Convergence des résultats sur les cohortes</h3>
+<p><strong>Vallée-Dubois et al.&nbsp;(2020):</strong> - Cohortes 1945-49, 1950-54, 1955-59 (baby-boomers) = plus souverainistes - Cohortes 1965-69, 1970-74 = moins souverainistes - “Baby boomers are indeed distinctively more supportive of Quebec sovereignty”</p>
+<p><strong>Notre étude:</strong> - Boomers (1947-1961) = +0.433 (plus souverainistes) - Gen Z (1992-2003) = -0.398 (plus fédéralistes) - Cohérence parfaite avec leurs résultats pour les Boomers</p>
+</section>
+<section id="convergence-des-résultats-sur-les-périodes" class="level3">
+<h3 class="anchored" data-anchor-id="convergence-des-résultats-sur-les-périodes">Convergence des résultats sur les périodes</h3>
+<p><strong>Vallée-Dubois et al.&nbsp;identifient:</strong> - 1990-1993: Pic post-Meech Lake - 1995-1996: Mobilisation référendaire - 2005: Scandale des commandites - 1985-1989: “Démobilisation psychologique” post-1980</p>
+<p><strong>Notre étude confirme:</strong> - 1993: +0.164 (post-Meech/Charlottetown) - 1997: +0.366 (post-référendum 1995) - 2004: +0.298 (Commission Gomery) - Années 1970s: Effets négatifs (pré-mouvement moderne)</p>
+</section>
+<section id="contribution-originale-de-notre-étude" class="level3">
+<h3 class="anchored" data-anchor-id="contribution-originale-de-notre-étude">Contribution originale de notre étude</h3>
+<ol type="1">
+<li><p><strong>Extension temporelle</strong>: Inclut 2013-2023, révélant l’effet exceptionnel de 2023 (+1.05)</p></li>
+<li><p><strong>Génération Z</strong>: Première estimation HAPC incluant cette cohorte (-0.40), absente des données de 2012</p></li>
+<li><p><strong>Event Study DiD</strong>: Complément quasi-expérimental absent de Vallée-Dubois et al., permettant un test de causalité (même si limité par les violations de parallel trends)</p></li>
+<li><p><strong>Confirmation de la théorie de la socialisation politique</strong>: Nos résultats corroborent leur conclusion que “having experienced the Quiet Revolution and the early fight for Québécois emancipation is what makes the baby boomer generation unique” (p.&nbsp;360)</p></li>
+</ol>
+</section>
+<section id="citation-clé-de-vallée-dubois-et-al.-pour-notre-article" class="level3">
+<h3 class="anchored" data-anchor-id="citation-clé-de-vallée-dubois-et-al.-pour-notre-article">Citation clé de Vallée-Dubois et al.&nbsp;pour notre article</h3>
+<blockquote class="blockquote">
+<p>“Contrary to conventional wisdom, we find that fluctuations in support for [sovereignty] over the last 30 years are not driven exclusively by a process of generational change. Important constitutional events are also responsible for these variations.” (p.&nbsp;360)</p>
+</blockquote>
+<p>Cette conclusion s’aligne avec notre argument: la neutralité de la Gen Z reflète <strong>à la fois</strong> l’absence d’événements mobilisateurs <strong>et</strong> un déclin séculaire actif observable même en période “placebo”.</p>
+<hr>
+</section>
+</section>
+<section id="limites-méthodologiques" class="level2">
+<h2 class="anchored" data-anchor-id="limites-méthodologiques">5. Limites méthodologiques</h2>
+<section id="event-study-did" class="level3">
+<h3 class="anchored" data-anchor-id="event-study-did">Event Study DiD</h3>
+<ol type="1">
+<li><strong>Violation des parallel trends</strong>: 2/4 événements ne satisfont pas cette hypothèse cruciale</li>
+<li><strong>Fenêtres temporelles asymétriques</strong>: Les périodes pré/post varient selon les événements</li>
+<li><strong>Confondants potentiels</strong>: Autres changements sociaux contemporains aux événements</li>
+<li><strong>Mesure de la VD</strong>: L’harmonisation des échelles (dichotomique, Likert 4-5 points) introduit du bruit</li>
+</ol>
+</section>
+<section id="hapc" class="level3">
+<h3 class="anchored" data-anchor-id="hapc">HAPC</h3>
+<ol type="1">
+<li><strong>Problème d’identification APC</strong>: Le HAPC ne résout pas complètement la colinéarité mathématique; il impose des hypothèses distributionnelles sur les effets aléatoires</li>
+<li><strong>Définition des cohortes</strong>: Les frontières générationnelles sont arbitraires</li>
+<li><strong>Hétérogénéité intra-cohorte</strong>: Le modèle traite chaque génération comme homogène</li>
+<li><strong>Variable binaire</strong>: La binarisation de la VD (iss_souv) perd l’information sur l’intensité des attitudes</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="fichiers-générés" class="level2">
+<h2 class="anchored" data-anchor-id="fichiers-générés">6. Fichiers générés</h2>
+<ul>
+<li><code>SharedFolder_spsa_article_nationalisme/tables/event_study/did_results.csv</code></li>
+<li><code>SharedFolder_spsa_article_nationalisme/tables/event_study/parallel_trends_test.csv</code></li>
+<li><code>SharedFolder_spsa_article_nationalisme/graphs/event_study/did_by_generation.png</code></li>
+<li><code>SharedFolder_spsa_article_nationalisme/graphs/event_study/parallel_trends_1995.png</code></li>
+<li><code>SharedFolder_spsa_article_nationalisme/graphs/hapc_cohort_effects.png</code></li>
+<li><code>SharedFolder_spsa_article_nationalisme/graphs/hapc_period_effects.png</code></li>
+<li><code>SharedFolder_spsa_article_nationalisme/graphs/hapc_age_effect.png</code></li>
+</ul>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
