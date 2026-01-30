@@ -1,12 +1,10 @@
-# Figure 3 Appendix: Regression tables with and without controls
+# Figure 2 Appendix: Regression tables with and without controls
 # Responds to Reviewer 1 Issue #11
-# Logistic regression predicting attitude strength (strong vs weak)
 
 # Packages ----------------------------------------------------------------
 library(dplyr)
 library(tibble)
 library(modelsummary)
-library(kableExtra)
 
 # Use classic booktabs format instead of tabularray
 options(modelsummary_factory_default = "kableExtra")
@@ -25,19 +23,19 @@ data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
          ),
          generation = factor(generation, levels = c("boomer", "preboomer", "x", "y", "z")))
 
-# Create binary DV: 1 = strong attitude (0 or 1), 0 = weak attitude (middle values)
-data$attitude_strength <- NA
-data$attitude_strength[data$iss_souv2 %in% c(0, 1)] <- 1
-data$attitude_strength[data$iss_souv2 %in% c(0.25, 0.33, 0.5, 0.66, 0.75)] <- 0
+# Prepare DV (using 5-point scale version)
+data$vd <- data$iss_souv2
+data$vd[data$vd == 0.33] <- 0.25
+data$vd[data$vd == 0.66] <- 0.75
 
 # Model data - separate for with/without controls to maximize N
 model_data_no_controls <- data |>
-  select(attitude_strength, generation, ses_lang.1) |>
+  select(vd, generation, ses_lang.1) |>
   tidyr::drop_na()
 
 model_data_with_controls <- data |>
   select(
-    attitude_strength, generation, ses_lang.1,
+    vd, generation, ses_lang.1,
     ses_gender, ses_family_income_centile_cat,
     ses_origin_from_canada.1, ses_educ
   ) |>
@@ -45,19 +43,17 @@ model_data_with_controls <- data |>
 
 # Models ------------------------------------------------------------------
 
-# Model 1: Without controls (logistic)
-model_no_controls <- glm(
-  attitude_strength ~ generation * ses_lang.1,
-  data = model_data_no_controls,
-  family = binomial()
+# Model 1: Without controls
+model_no_controls <- lm(
+  vd ~ generation * ses_lang.1,
+  data = model_data_no_controls
 )
 
-# Model 2: With controls (logistic)
-model_with_controls <- glm(
-  attitude_strength ~ generation * ses_lang.1 + ses_gender +
+# Model 2: With controls
+model_with_controls <- lm(
+  vd ~ generation * ses_lang.1 + ses_gender +
     ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
-  data = model_data_with_controls,
-  family = binomial()
+  data = model_data_with_controls
 )
 
 # Create comparison table -------------------------------------------------
@@ -102,8 +98,8 @@ coef_map <- c(
 gof_map <- tribble(
   ~raw,           ~clean,       ~fmt,
   "nobs",         "N",          0,
-  "AIC",          "AIC",        1,
-  "BIC",          "BIC",        1
+  "r.squared",    "R²",         3,
+  "adj.r.squared", "Adj. R²",   3
 )
 
 # Save outputs ------------------------------------------------------------
@@ -137,6 +133,7 @@ df_estimates <- df_raw |>
   ungroup()
 
 # Maintain order from coef_map
+term_order <- names(coef_map)
 df_estimates <- df_estimates |>
   mutate(term = factor(term, levels = coef_map)) |>
   arrange(term) |>
@@ -162,6 +159,6 @@ tab_latex <- kableExtra::kbl(
   kableExtra::kable_styling(latex_options = c("hold_position"))
 
 writeLines(as.character(tab_latex),
-           "SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")
+           "SharedFolder_spsa_article_nationalisme/tables/appendix/figure2_regression_table.tex")
 
-message("Table saved to SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")
+message("Table saved to SharedFolder_spsa_article_nationalisme/tables/appendix/figure2_regression_table.tex")
