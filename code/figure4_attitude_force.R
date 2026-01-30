@@ -104,6 +104,6 @@ ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
     )
 
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/figures/figure3_attitude_strength_by_generation.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure4_attitude_strength_by_generation.png",
   width = 9, height = 6
 )

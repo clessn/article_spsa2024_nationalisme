@@ -125,6 +125,6 @@ ggplot(
     )
 
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/figures/figure5_attitude_strength_idcan.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure6_attitude_strength_idcan.png",
   width = 9, height = 6
 )
