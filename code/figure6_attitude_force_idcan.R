@@ -101,13 +101,13 @@ ggplot(
     clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = paste0("Predicted probability of having an strong position on the independence scale with interaction between generation and national primary identification\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2022, n = ", nrow(model$model), ".")
+      caption = paste0("Predicted probability of having an extreme position on the independence scale with interaction between generation and national primary identification\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2022, n = ", nrow(model$model), ".")
     ) +
     scale_y_continuous(
       limits = c(0, 1),
       breaks = c(0, 0.25, 0.5, 0.75, 1),
       labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)),
-      name = "Probability of Strong Attitude\non Independentist Scale\n"
+      name = "Probability of Extreme Attitude\non Independentist Scale\n"
     ) +
     guides(
       color = "none",
