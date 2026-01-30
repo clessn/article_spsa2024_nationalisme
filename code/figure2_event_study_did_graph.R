@@ -91,7 +91,7 @@ ggplot(plot_data, aes(x = estimate, y = event_name, alpha = sig_cat)) +
 # 4. SAUVEGARDER ---------------------------------------------------------------
 
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/graphs/event_study/did_by_generation.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure2_did_by_generation.png",
   width = 8,
   height = 6,
   dpi = 300
