@@ -86,14 +86,14 @@ ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
     clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = paste0("Predicted probability of having an strong position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", nrow(model$model), ".")
+      caption = paste0("Predicted probability of having an extreme position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", nrow(model$model), ".")
     ) +
     scale_y_continuous(
       limits = c(0, 1),
       breaks = c(0, 0.25, 0.5, 0.75, 1),
       labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)),
       expand = c(0, 0),
-      name = "Probability of Strong Attitude\non Independentist Scale\n"
+      name = "Probability of Extreme Attitude\non Independentist Scale\n"
     ) +
     guides(color = "none") +
     theme(
@@ -104,6 +104,6 @@ ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
     )
 
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/figures/figure3_attitude_strength_by_generation.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure4_attitude_strength_by_generation.png",
   width = 9, height = 6
 )
