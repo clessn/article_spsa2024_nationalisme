@@ -119,6 +119,8 @@ ggplot(
     ) +
     theme(
       panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),
+      axis.title.x = element_text(hjust = 0.5),
+      axis.title.y = element_text(hjust = 0.5),
       plot.caption = element_text(hjust = 1),
       plot.caption.position = "plot",
       axis.text.x = element_text(size = 12),
