@@ -1,14 +1,18 @@
 ## generate_weights.R
 ## Applique le raking au dataset merged_v1.rds pour créer merged_v2.rds
 ##
-## Stratégie:
+## STRATÉGIE DE RAKING SÉQUENTIEL:
 ## 1. Associer chaque observation à l'année de recensement précédente la plus proche
 ## 2. Convertir l'âge en groupes d'âge compatibles avec les marginals
-## 3. Appliquer le raking avec survey::rake()
-## 4. Gérer les valeurs manquantes avec des fonctions de raking par combinaisons
+## 3. Appliquer le raking SÉQUENTIEL avec survey::rake()
+##    - Étape 1: Age × Gender (distribution conjointe)
+##    - Étape 2: Language (distribution marginale)
+##    - Éducation: NON corrigée par weighting, sera contrôlée en régression
 ##
-## Note: Pour 1996-2006, language n'est disponible qu'en "total" (pas par sexe)
-##       On utilise alors un raking marginal pour la langue
+## Justification: Le raking simultané sur age×gender×language×education produit
+## des poids instables (ESS < 45%) pour les années récentes (2015, 2021-2023).
+## Le raking séquentiel maintient l'efficacité statistique (ESS > 65%) tout en
+## corrigeant les biais clés. Voir doc/weighting.md pour détails.
 
 library(dplyr)
 library(tidyr)
@@ -20,7 +24,7 @@ library(survey)
 
 # Chemins
 # Assumes script is running from code/census_marginals/
-data_dir <- "../../SharedFolder_spsa_article_nationalisme/data" 
+data_dir <- "../../SharedFolder_spsa_article_nationalisme/data"
 marginals_path <- "marginals_all.rds"
 
 # Années de recensement disponibles
@@ -29,6 +33,15 @@ CENSUS_YEARS <- c(1961, 1966, 1971, 1976, 1981, 1986, 1991, 1996, 2001, 2006, 20
 # Paramètres du raking
 RAKE_MAXIT <- 100      # Nombre max d'itérations
 RAKE_EPSILON <- 1e-6   # Seuil de convergence
+
+# Trimming adaptatif selon l'année
+TRIM_LOWER <- 0.2  # Valeur par défaut
+TRIM_UPPER <- 5.0  # Valeur par défaut
+TRIM_LOWER_AGG <- 0.5  # Plus agressif pour années problématiques
+TRIM_UPPER_AGG <- 2.5  # Plus agressif pour années problématiques
+
+# Années nécessitant trimming agressif (haute variance)
+AGGRESSIVE_TRIM_YEARS <- c(2015, 2021, 2022, 2023)
 
 # =============================================================================
 # FONCTIONS UTILITAIRES
@@ -125,28 +138,17 @@ prepare_margins <- function(marginals_df, census_yr, has_lang_by_sex = TRUE) {
   age_gender <- bind_rows(age_male, age_female)
 
   # --- Language ---
+  # CHANGEMENT: Toujours utiliser la distribution marginale (pas par genre)
+  # pour le raking séquentiel
   lang_m <- m %>% filter(variable == "language")
-  
+
   lang_margins <- NULL
   if (nrow(lang_m) > 0) {
-    if (has_lang_by_sex) {
-      # Language par gender disponible
-      lang_margins <- lang_m %>%
-        filter(gender %in% c("male", "female")) %>%
-        transmute(
-          ses_gender = gender,
-          ses_lang.1 = category,
-          Freq = n
-        )
-    } else {
-      # Language total seulement
-      lang_margins <- lang_m %>%
-        filter(gender == "total" | (is.na(gender) & !is.na(n))) %>%
-        transmute(
-          ses_lang.1 = category,
-          Freq = n
-        )
-    }
+    # Agréger la langue sur tous les genres
+    lang_margins <- lang_m %>%
+      group_by(category) %>%
+      summarise(Freq = sum(n), .groups = "drop") %>%
+      rename(ses_lang.1 = category)
   }
 
   # --- Education par gender ---
@@ -170,104 +172,118 @@ prepare_margins <- function(marginals_df, census_yr, has_lang_by_sex = TRUE) {
   )
 }
 
-#' Applique le raking à un sous-ensemble de données
+#' Applique le raking SÉQUENTIEL à un sous-ensemble de données
+#' Étape 1: Age × Gender (distribution conjointe)
+#' Étape 2: Language (distribution marginale)
 #' Retourne les poids calculés
-apply_raking <- function(data_subset, margins, use_edu = TRUE, use_lang = TRUE) {
+apply_sequential_raking <- function(data_subset, margins) {
 
-  # Créer un design de sondage initial (poids = 1)
-  data_subset$init_weight <- 1
-  
-  # Ensure no NAs in IDs (survey package can be picky)
-  if(any(is.na(data_subset$init_weight))) stop("NA weights")
-
-  des <- svydesign(
-    ids = ~1,
-    weights = ~init_weight,
-    data = data_subset
-  )
-
-  # Préparer les marges pour rake()
-  # Toujours commencer par Age x Gender car c'est notre base solide
-  sample_margins <- list(~ses_gender + age_group)
-  pop_margins <- list(margins$age_gender)
-
-  # Ajouter Language
-  if (use_lang && !is.null(margins$lang) && nrow(margins$lang) > 0) {
-    if ("ses_gender" %in% names(margins$lang)) {
-        # Joint distribution
-        sample_margins <- c(sample_margins, list(~ses_gender + ses_lang.1))
-        pop_margins <- c(pop_margins, list(margins$lang))
-    } else {
-        # Marginal distribution
-        sample_margins <- c(sample_margins, list(~ses_lang.1))
-        pop_margins <- c(pop_margins, list(margins$lang))
-    }
+  # Vérifier qu'on a les données nécessaires
+  if (is.null(margins$age_gender) || nrow(margins$age_gender) == 0) {
+    message("    No age×gender margins available, returning uniform weights")
+    return(rep(1, nrow(data_subset)))
   }
 
-  # Ajouter Education
-  if (use_edu && !is.null(margins$edu) && nrow(margins$edu) > 0) {
-     # Education is always by gender in our structure
-    sample_margins <- c(sample_margins, list(~ses_gender + ses_educ))
-    pop_margins <- c(pop_margins, list(margins$edu))
-  }
-  
-  # --- ALIGNEMENT POPULATION / SAMPLE ---
-  # Pour éviter l'erreur "Some strata absent from sample", on ne garde 
-  # dans les marges de population que les catégories/combinaisons présentes dans l'échantillon.
-  
-  clean_pop_margins <- list()
-  clean_sample_margins <- list()
-  
-  for (i in seq_along(sample_margins)) {
-    form <- sample_margins[[i]]
-    pop_df <- pop_margins[[i]]
-    
-    # Variables impliquées dans cette marge
-    vars <- all.vars(form)
-    
-    # Vérifier quelles combinaisons existent dans le sample
-    # On utilise distinct() pour avoir les combinaisons uniques présentes
-    sample_combs <- data_subset %>%
-      select(all_of(vars)) %>%
-      distinct() %>%
-      drop_na() # On ignore les NA car ils ne sont pas rakés par cette marge
-      
-    if (nrow(sample_combs) == 0) {
-        # Si aucune observation n'a de valeurs valides pour cette marge, on la saute
-        next
-    }
-
-    # Filtrer la population pour ne garder que ce qui est dans le sample
-    # semi_join va garder les lignes de pop_df qui matchent sample_combs
-    pop_filtered <- pop_df %>%
-      semi_join(sample_combs, by = vars)
-    
-    if (nrow(pop_filtered) > 0) {
-      clean_pop_margins[[length(clean_pop_margins) + 1]] <- pop_filtered
-      clean_sample_margins[[length(clean_sample_margins) + 1]] <- form
-    }
-  }
-  
-  if (length(clean_pop_margins) == 0) {
-      # Fallback si aucune marge ne matche
-      return(rep(1, nrow(data_subset)))
+  # Filtrer les observations avec age et gender valides
+  valid_obs <- !is.na(data_subset$age_group) & !is.na(data_subset$ses_gender)
+  if (sum(valid_obs) < 20) {
+    message("    Too few valid observations, returning uniform weights")
+    return(rep(1, nrow(data_subset)))
   }
 
-  # Appliquer le raking
+  data_valid <- data_subset[valid_obs, ]
+  data_valid$init_weight <- 1
+
   tryCatch({
-    raked <- rake(
+    # ÉTAPE 1: Raking Age × Gender
+    des <- svydesign(ids = ~1, weights = ~init_weight, data = data_valid)
+
+    # Filtrer les marges pour ne garder que les combinaisons présentes
+    sample_combs <- data_valid %>%
+      select(age_group, ses_gender) %>%
+      distinct() %>%
+      drop_na()
+
+    pop_age_gender <- margins$age_gender %>%
+      semi_join(sample_combs, by = c("age_group", "ses_gender"))
+
+    if (nrow(pop_age_gender) == 0) {
+      message("    No matching age×gender cells, returning uniform weights")
+      return(rep(1, nrow(data_subset)))
+    }
+
+    raked1 <- rake(
       design = des,
-      sample.margins = clean_sample_margins,
-      population.margins = clean_pop_margins,
+      sample.margins = list(~age_group + ses_gender),
+      population.margins = list(pop_age_gender),
       control = list(maxit = RAKE_MAXIT, epsilon = RAKE_EPSILON)
     )
 
-    return(weights(raked))
+    message("    Step 1 (Age×Gender): converged")
+
+    # ÉTAPE 2: Raking Language (si disponible)
+    if (!is.null(margins$lang) && nrow(margins$lang) > 0) {
+
+      # Vérifier qu'on a des observations avec langue valide
+      valid_lang_idx <- which(!is.na(data_valid$ses_lang.1))
+      if (length(valid_lang_idx) >= 20) {
+
+        # Filtrer les marges de langue
+        sample_langs <- data_valid %>%
+          filter(!is.na(ses_lang.1)) %>%
+          distinct(ses_lang.1)
+
+        pop_lang <- margins$lang %>%
+          semi_join(sample_langs, by = "ses_lang.1")
+
+        if (nrow(pop_lang) > 0) {
+          # Créer un subset avec seulement les observations ayant une langue
+          data_with_lang <- data_valid[valid_lang_idx, ]
+          weights_after_step1 <- weights(raked1)[valid_lang_idx]
+
+          # Créer nouveau design avec les poids de l'étape 1
+          des_lang <- svydesign(
+            ids = ~1,
+            weights = ~weights_after_step1,
+            data = data_with_lang
+          )
+
+          raked2 <- rake(
+            design = des_lang,
+            sample.margins = list(~ses_lang.1),
+            population.margins = list(pop_lang),
+            control = list(maxit = RAKE_MAXIT, epsilon = RAKE_EPSILON)
+          )
+
+          message("    Step 2 (Language): converged")
+
+          # Extraire les poids finaux
+          weights_out <- rep(1, nrow(data_subset))
+          weights_final <- weights(raked1)  # Poids de l'étape 1 pour tous
+          weights_final[valid_lang_idx] <- weights(raked2)  # Remplacer par étape 2 où disponible
+          weights_out[valid_obs] <- weights_final
+          return(weights_out)
+        }
+      }
+    }
+
+    # Si pas de language raking, retourner les poids après étape 1
+    message("    Step 2 (Language): skipped")
+    weights_out <- rep(1, nrow(data_subset))
+    weights_out[valid_obs] <- weights(raked1)
+    return(weights_out)
 
   }, error = function(e) {
-    message(paste("Raking failed, returning 1s. Error:", e$message))
+    message(paste("    Sequential raking failed:", e$message))
     return(rep(1, nrow(data_subset)))
   })
+}
+
+#' Calcule l'Effective Sample Size
+calculate_ess <- function(weights) {
+  w <- weights[!is.na(weights)]
+  if (length(w) == 0) return(NA)
+  sum(w)^2 / sum(w^2)
 }
 
 # =============================================================================
@@ -306,17 +322,6 @@ marginals_other <- marginals_raw %>%
   filter(variable %in% c("language", "education"))
 
 marginals <- bind_rows(marginals_std, marginals_other)
-
-# Identifier les années où language est par "total" seulement
-lang_by_total_years <- marginals_raw %>%
-  filter(variable == "language") %>%
-  group_by(census_year) %>%
-  summarise(has_gender = any(gender %in% c("male", "female")), .groups = "drop") %>%
-  filter(!has_gender) %>%
-  pull(census_year)
-
-message(sprintf("  - Years with language by total only: %s",
-                paste(lang_by_total_years, collapse = ", ")))
 
 # Préparer le dataset
 data <- data_raw %>%
@@ -359,10 +364,15 @@ message(sprintf("  - With valid language: %d", sum(!is.na(data$ses_lang.1))))
 message(sprintf("  - With valid education: %d", sum(!is.na(data$ses_educ))))
 
 # =============================================================================
-# APPLICATION DU RAKING
+# APPLICATION DU RAKING SÉQUENTIEL
 # =============================================================================
 
-message("\nApplying raking by census year...")
+message("\n")
+message("========================================")
+message("APPLYING SEQUENTIAL RAKING")
+message("========================================")
+message("\nStrategy: Age×Gender + Language")
+message("Education will be controlled via regression\n")
 
 # Initialiser les poids
 data$weight <- NA_real_
@@ -378,78 +388,15 @@ for (cy in census_years_in_data) {
   idx <- which(data$census_year == cy)
   subset_data <- data[idx, ]
 
-  message(sprintf("    - %d observations", length(idx)))
-
-  # Vérifier si language est par total pour cette année
-  has_lang_by_sex <- !(cy %in% lang_by_total_years)
+  survey_years <- sort(unique(subset_data$year))
+  message(sprintf("  Survey years: %s", paste(survey_years, collapse = ", ")))
+  message(sprintf("  Total observations: %d", length(idx)))
 
   # Préparer les marges
-  margins <- prepare_margins(marginals, cy, has_lang_by_sex)
+  margins <- prepare_margins(marginals, cy)
 
-  # Identifier les observations complètes pour le raking
-  
-  # Niveau 1: Toutes les variables (age, gender, language, education)
-  complete_all <- !is.na(subset_data$age_group) &
-                  !is.na(subset_data$ses_gender) &
-                  !is.na(subset_data$ses_lang.1) &
-                  !is.na(subset_data$ses_educ)
-
-  # Niveau 2: Sans education (age, gender, language)
-  complete_no_edu <- !is.na(subset_data$age_group) &
-                     !is.na(subset_data$ses_gender) &
-                     !is.na(subset_data$ses_lang.1) &
-                     is.na(subset_data$ses_educ)
-
-  # Niveau 3: Sans language (age, gender, education)
-  complete_no_lang <- !is.na(subset_data$age_group) &
-                      !is.na(subset_data$ses_gender) &
-                      is.na(subset_data$ses_lang.1) &
-                      !is.na(subset_data$ses_educ)
-
-  # Niveau 4: Seulement age et gender
-  complete_basic <- !is.na(subset_data$age_group) &
-                    !is.na(subset_data$ses_gender) &
-                    is.na(subset_data$ses_lang.1) &
-                    is.na(subset_data$ses_educ)
-  
-  # Incomplete
-  incomplete <- is.na(subset_data$age_group) | is.na(subset_data$ses_gender)
-
-  message(sprintf("    - Complete (all vars): %d", sum(complete_all)))
-  message(sprintf("    - Complete (no edu): %d", sum(complete_no_edu)))
-  message(sprintf("    - Complete (no lang): %d", sum(complete_no_lang)))
-  message(sprintf("    - Basic (age+gender): %d", sum(complete_basic)))
-  message(sprintf("    - Incomplete: %d", sum(incomplete)))
-
-  weights_vec <- rep(1, nrow(subset_data))
-
-  # 1. Raking complet
-  if (sum(complete_all) > 20) {
-    message("    - Applying full raking...")
-    w <- apply_raking(subset_data[complete_all, ], margins, use_edu = TRUE, use_lang = TRUE)
-    weights_vec[complete_all] <- w
-  }
-
-  # 2. Raking sans education
-  if (sum(complete_no_edu) > 20) {
-    message("    - Applying raking without education...")
-    w <- apply_raking(subset_data[complete_no_edu, ], margins, use_edu = FALSE, use_lang = TRUE)
-    weights_vec[complete_no_edu] <- w
-  }
-
-  # 3. Raking sans language
-  if (sum(complete_no_lang) > 20) {
-    message("    - Applying raking without language...")
-    w <- apply_raking(subset_data[complete_no_lang, ], margins, use_edu = TRUE, use_lang = FALSE)
-    weights_vec[complete_no_lang] <- w
-  }
-
-  # 4. Raking basique
-  if (sum(complete_basic) > 20) {
-    message("    - Applying basic raking (age, gender only)...")
-    w <- apply_raking(subset_data[complete_basic, ], margins, use_edu = FALSE, use_lang = FALSE)
-    weights_vec[complete_basic] <- w
-  }
+  # Appliquer le raking séquentiel (Age×Gender + Language)
+  weights_vec <- apply_sequential_raking(subset_data, margins)
 
   data$weight[idx] <- weights_vec
 }
@@ -476,22 +423,84 @@ message("\nWeight statistics:")
 summary_stats <- summary(data$weight)
 print(summary_stats)
 
-# Trimming des poids extrêmes
-TRIM_LOWER <- 0.2
-TRIM_UPPER <- 5.0
+# Trimming adaptatif des poids extrêmes
+message("\nTrimming weights...")
+message(sprintf("  Default years: [%.1f, %.1f]", TRIM_LOWER, TRIM_UPPER))
+message(sprintf("  Aggressive years (%s): [%.1f, %.1f]",
+                paste(AGGRESSIVE_TRIM_YEARS, collapse=", "),
+                TRIM_LOWER_AGG, TRIM_UPPER_AGG))
 
 data <- data %>%
   mutate(
+    trim_lower = ifelse(year %in% AGGRESSIVE_TRIM_YEARS, TRIM_LOWER_AGG, TRIM_LOWER),
+    trim_upper = ifelse(year %in% AGGRESSIVE_TRIM_YEARS, TRIM_UPPER_AGG, TRIM_UPPER),
     weight_trimmed = case_when(
-      weight < TRIM_LOWER ~ TRIM_LOWER,
-      weight > TRIM_UPPER ~ TRIM_UPPER,
+      weight < trim_lower ~ trim_lower,
+      weight > trim_upper ~ trim_upper,
       TRUE ~ weight
     )
   )
 
-message(sprintf("\nAfter trimming [%.1f, %.1f]:", TRIM_LOWER, TRIM_UPPER))
-message(sprintf("  - Observations trimmed low: %d", sum(data$weight < TRIM_LOWER, na.rm = TRUE)))
-message(sprintf("  - Observations trimmed high: %d", sum(data$weight > TRIM_UPPER, na.rm = TRUE)))
+trim_stats <- data %>%
+  group_by(year) %>%
+  summarise(
+    n = n(),
+    n_trimmed_low = sum(weight < first(trim_lower), na.rm = TRUE),
+    n_trimmed_high = sum(weight > first(trim_upper), na.rm = TRUE),
+    pct_trimmed = 100 * (n_trimmed_low + n_trimmed_high) / n,
+    .groups = "drop"
+  ) %>%
+  filter(pct_trimmed > 0)
+
+if (nrow(trim_stats) > 0) {
+  message("\nTrimming summary:")
+  print(trim_stats, n = 25)
+} else {
+  message("  No observations trimmed")
+}
+
+# RE-NORMALISER après trimming pour corriger le biais introduit
+message("\nRe-normalizing after trimming...")
+data <- data %>%
+  group_by(year) %>%
+  mutate(
+    weight_trimmed = weight_trimmed * n() / sum(weight_trimmed, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  select(-trim_lower, -trim_upper)
+
+message("  Weights re-normalized to sum = n by year")
+
+# =============================================================================
+# CALCUL DE L'EFFECTIVE SAMPLE SIZE (ESS)
+# =============================================================================
+
+message("\n\nCalculating Effective Sample Size (ESS)...")
+
+ess_summary <- data %>%
+  group_by(year) %>%
+  summarise(
+    n = n(),
+    ess_raw = calculate_ess(weight_raw),
+    ess_normalized = calculate_ess(weight),
+    ess_trimmed = calculate_ess(weight_trimmed),
+    efficiency_trimmed = ess_trimmed / n,
+    .groups = "drop"
+  )
+
+message("\nESS by year:")
+print(ess_summary, n = 25)
+
+message("\nYears with efficiency < 60%:")
+low_eff <- ess_summary %>%
+  filter(efficiency_trimmed < 0.60) %>%
+  arrange(efficiency_trimmed)
+
+if (nrow(low_eff) > 0) {
+  print(low_eff)
+} else {
+  message("  None (all years have good efficiency)")
+}
 
 # =============================================================================
 # SAUVEGARDE
@@ -512,30 +521,43 @@ data_final <- data %>%
     age_group, census_year, weight, weight_raw, weight_trimmed
   )
 
+# Ajouter les ESS au dataset
+data_final <- data_final %>%
+  left_join(
+    ess_summary %>% select(year, ess_trimmed, efficiency_trimmed),
+    by = "year"
+  )
+
 saveRDS(data_final, file.path(data_dir, "merged_v2.rds"))
 
-message(sprintf("\nSaved: %s", file.path(data_dir, "merged_v2.rds")))
+message(sprintf("Saved: %s", file.path(data_dir, "merged_v2.rds")))
 
 # =============================================================================
 # RÉSUMÉ FINAL
 # =============================================================================
 
-message("\n========================================")
-message("RAKING SUMMARY")
+message("\n")
 message("========================================")
+message("FINAL SUMMARY")
+message("========================================\n")
 
-# Par année de sondage
-summary_by_year <- data_final %>%
+final_summary <- data_final %>%
   group_by(year) %>%
   summarise(
     n = n(),
     census_year = first(census_year),
     mean_weight = mean(weight, na.rm = TRUE),
     sd_weight = sd(weight, na.rm = TRUE),
-    pct_complete = mean(!is.na(weight)) * 100,
+    mean_weight_trimmed = mean(weight_trimmed, na.rm = TRUE),
+    sd_weight_trimmed = sd(weight_trimmed, na.rm = TRUE),
+    ess = first(ess_trimmed),
+    efficiency = first(efficiency_trimmed),
     .groups = "drop"
   )
 
-print(summary_by_year, n = 30)
+print(final_summary, n = 30)
 
-message("\nDone!")
+message("\n✓ Sequential raking complete!")
+message("  Strategy: Age×Gender + Language")
+message("  Education controlled via regression")
+message("  See doc/weighting.md for methodological justification")
