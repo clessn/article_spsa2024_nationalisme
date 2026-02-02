@@ -59,4 +59,5 @@ message("\n=== Total rows: ", nrow(marginals_all), " ===")
 # =============================================================================
 
 saveRDS(marginals_all, file.path(marginals_dir, "marginals_all.rds"))
+saveRDS(marginals_all, "code/census_marginals/marginals_all.rds")
 message("\nSaved to: ", file.path(marginals_dir, "marginals_all.rds"))
