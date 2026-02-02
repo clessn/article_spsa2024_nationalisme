@@ -78,6 +78,7 @@ for (i in 1:length(years_to_keep)) {
     summarise(
       n = n(),
       estimate = mean(souv_unified, na.rm = TRUE),
+      ## weighted.mean(souv_unified, w = weight, na.rm = TRUE)
       sd = sd(souv_unified, na.rm = TRUE),
       se = sd / sqrt(n),
       conf.low = estimate - 1.96 * se,
