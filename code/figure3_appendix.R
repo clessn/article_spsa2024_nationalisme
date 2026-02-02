@@ -6,13 +6,14 @@
 library(dplyr)
 library(tibble)
 library(modelsummary)
+library(survey)  # for svyglm with proper weighting and clustering
 
 # Use classic booktabs format instead of tabularray
 options(modelsummary_factory_default = "kableExtra")
 options(knitr.table.format = "latex")
 
 # Data -------------------------------------------------------------------
-data_raw <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
+data_raw <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   filter(year >= 2021) |>
   mutate(yob = year - ses_age)
 
@@ -53,14 +54,15 @@ data_1997 <- prepare_dv(data_1997)
 # Model data - separate for with/without controls to maximize N
 # For 1992 definition (main model)
 model_data_no_controls_1992 <- data_1992 |>
-  select(vd, generation, ses_lang.1) |>
+  select(vd, generation, ses_lang.1, year, weight_trimmed) |>
   tidyr::drop_na()
 
 model_data_with_controls_1992 <- data_1992 |>
   select(
     vd, generation, ses_lang.1,
     ses_gender, ses_family_income_centile_cat,
-    ses_origin_from_canada.1, ses_educ
+    ses_origin_from_canada.1, ses_educ,
+    year, weight_trimmed
   ) |>
   tidyr::drop_na()
 
@@ -69,7 +71,8 @@ model_data_with_controls_1995 <- data_1995 |>
   select(
     vd, generation, ses_lang.1,
     ses_gender, ses_family_income_centile_cat,
-    ses_origin_from_canada.1, ses_educ
+    ses_origin_from_canada.1, ses_educ,
+    year, weight_trimmed
   ) |>
   tidyr::drop_na()
 
@@ -78,37 +81,66 @@ model_data_with_controls_1997 <- data_1997 |>
   select(
     vd, generation, ses_lang.1,
     ses_gender, ses_family_income_centile_cat,
-    ses_origin_from_canada.1, ses_educ
+    ses_origin_from_canada.1, ses_educ,
+    year, weight_trimmed
   ) |>
   tidyr::drop_na()
 
 # Models ------------------------------------------------------------------
 
-# Model 1: Without controls (Gen Z = 1992+)
-model_no_controls <- lm(
-  vd ~ generation * ses_lang.1,
+# Survey designs with clustering by year
+des_no_controls_1992 <- svydesign(
+  ids = ~year,
+  weights = ~weight_trimmed,
   data = model_data_no_controls_1992
 )
 
-# Model 2: With controls (Gen Z = 1992+)
-model_with_controls_1992 <- lm(
-  vd ~ generation * ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
+des_with_controls_1992 <- svydesign(
+  ids = ~year,
+  weights = ~weight_trimmed,
   data = model_data_with_controls_1992
 )
 
-# Model 3: With controls (Gen Z = 1995+) - Robustness check
-model_with_controls_1995 <- lm(
-  vd ~ generation * ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
+des_with_controls_1995 <- svydesign(
+  ids = ~year,
+  weights = ~weight_trimmed,
   data = model_data_with_controls_1995
 )
 
-# Model 4: With controls (Gen Z = 1997+) - Robustness check (Pew definition)
-model_with_controls_1997 <- lm(
-  vd ~ generation * ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
+des_with_controls_1997 <- svydesign(
+  ids = ~year,
+  weights = ~weight_trimmed,
   data = model_data_with_controls_1997
+)
+
+# Model 1: Without controls (Gen Z = 1992+)
+model_no_controls <- svyglm(
+  vd ~ generation * ses_lang.1,
+  design = des_no_controls_1992
+)
+
+# Model 2: With controls (Gen Z = 1992+)
+model_with_controls_1992 <- svyglm(
+  vd ~ generation * ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ +
+    factor(year),
+  design = des_with_controls_1992
+)
+
+# Model 3: With controls (Gen Z = 1995+) - Robustness check
+model_with_controls_1995 <- svyglm(
+  vd ~ generation * ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ +
+    factor(year),
+  design = des_with_controls_1995
+)
+
+# Model 4: With controls (Gen Z = 1997+) - Robustness check (Pew definition)
+model_with_controls_1997 <- svyglm(
+  vd ~ generation * ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ +
+    factor(year),
+  design = des_with_controls_1997
 )
 
 # Create comparison table -------------------------------------------------
@@ -154,14 +186,12 @@ coef_map <- c(
 # Goodness of fit statistics
 gof_map <- tribble(
   ~raw,           ~clean,       ~fmt,
-  "nobs",         "N",          0,
-  "r.squared",    "R²",         3,
-  "adj.r.squared", "Adj. R²",   3
+  "nobs",         "N",          0
 )
 
 # Save outputs ------------------------------------------------------------
 
-# Generate table data
+# Generate table data (svyglm already has proper SEs)
 df_raw <- modelsummary(
   models,
   coef_map = coef_map,
@@ -201,8 +231,17 @@ df_gof <- df_raw |>
   filter(part == "gof") |>
   select(term, `1992+ (no controls)`, `1992+`, `1995+`, `1997+`)
 
+# Add FE indicators
+df_fe <- tibble(
+  term = c("Year FE"),
+  `1992+ (no controls)` = c("No"),
+  `1992+` = c("Yes"),
+  `1995+` = c("Yes"),
+  `1997+` = c("Yes")
+)
+
 # Combine
-df <- bind_rows(df_estimates, df_gof)
+df <- bind_rows(df_estimates, df_fe, df_gof)
 
 # Create LaTeX table
 tab_latex <- kableExtra::kbl(
@@ -214,7 +253,13 @@ tab_latex <- kableExtra::kbl(
   align = "lcccc"
 ) |>
   kableExtra::kable_styling(latex_options = c("hold_position", "scale_down")) |>
-  kableExtra::add_header_above(c(" " = 1, " " = 1, "With controls" = 3))
+  kableExtra::add_header_above(c(" " = 1, " " = 1, "With controls" = 3)) |>
+  kableExtra::footnote(
+    general = "Survey-weighted regression with standard errors clustered by survey year.",
+    general_title = "Note: ",
+    footnote_as_chunk = TRUE,
+    threeparttable = TRUE
+  )
 
 writeLines(as.character(tab_latex),
            "SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")

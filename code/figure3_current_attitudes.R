@@ -3,10 +3,12 @@
 # Packages ----------------------------------------------------------------
 library(dplyr)
 library(ggplot2)
+library(survey)  # for svyglm with proper weighting and clustering
+library(emmeans)  # for predicted values from svyglm
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
-  filter(year >= 2021) |> 
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
+  filter(year >= 2021) |>
   mutate(yob = year - ses_age,
          generation = case_when(
            yob %in% 1925:1946 ~ "preboomer",
@@ -49,39 +51,70 @@ create_model <- function(
   vd
 ){
   data$vd <- data[[vd]]
-  model_data <- data |> 
+  model_data <- data |>
+    mutate(
+      year_f = factor(year)
+    ) |>
     select(
       vd,
       generation, ses_lang.1,
       ses_gender,
       ses_family_income_centile_cat,
       ses_origin_from_canada.1,
-      ses_educ
-    ) |> 
+      ses_educ,
+      year_f,
+      weight_trimmed
+    ) |>
     tidyr::drop_na()
-  model <- lm(
-    vd ~ generation * ses_lang.1 + .,
+
+  # Create survey design with clustering by year
+  des <- svydesign(
+    ids = ~year_f,  # cluster by survey year
+    weights = ~weight_trimmed,
     data = model_data
   )
-  return(model)
+
+  model <- svyglm(
+    vd ~ generation * ses_lang.1 +
+      ses_gender + ses_family_income_centile_cat +
+      ses_origin_from_canada.1 + ses_educ +
+      year_f,
+    design = des
+  )
+  return(list(model = model, model_data = model_data))
 }
 
 create_figure2 <- function(
   data, vd
 ){
-  model <- create_model(
+  result <- create_model(
     data, vd
   )
-  print(nrow(model$model))
+  model <- result$model
+  model_data <- result$model_data
+  n_obs <- nobs(model)
+  print(n_obs)
 
-  preds <- marginaleffects::predictions(
-    model = model,
-    newdata = marginaleffects::datagrid(
-      model = model,
-      generation = c("preboomer", "boomer", "x", "y", "z"),
-      ses_lang.1 = c("english", "french", "other")
-    )
-  ) |> 
+  # Use emmeans for predictions (works with svyglm)
+  # Fix reference levels for nuisance factors
+  em <- emmeans(model, ~ generation | ses_lang.1,
+                at = list(
+                  year_f = levels(model_data$year_f)[1]
+                ),
+                nuisance = c("ses_gender", "ses_family_income_centile_cat", "ses_educ"))
+
+  # Extract as dataframe and calculate CIs manually (svyglm gives negative df)
+  preds <- as.data.frame(summary(em))
+  n <- nrow(model_data)
+  k <- length(coef(model))
+  df_error <- max(n - k, 1)
+  preds$conf.low <- preds$emmean - qt(0.975, df_error) * preds$SE
+  preds$conf.high <- preds$emmean + qt(0.975, df_error) * preds$SE
+
+  # Rename for consistency
+  preds$estimate <- preds$emmean
+
+  preds <- preds |>
     mutate(
       generation = factor(
         generation,
@@ -94,7 +127,7 @@ create_figure2 <- function(
         labels = c("French", "English", "Other")
       )
     )
-  
+
   print(as.data.frame(preds))
 
   ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
@@ -111,15 +144,14 @@ create_figure2 <- function(
     clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = paste0("Predicted position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", nrow(model$model), ".")
+      caption = paste0("Predicted position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", n_obs, ".")
     ) +
     scale_y_continuous(
-      limits = c(0, 1),
       breaks = c(0, 0.25, 0.5, 0.75, 1),
       expand = c(0, 0),
-      #labels = c("More\nFederalist", "", "", "", "More\nSeparatist"),
       name = "Predicted Position on\nIndependence Scale\n"
     ) +
+    coord_cartesian(ylim = c(0, 1)) +
     annotate(
       geom = "text",
       x = 0.725, y = 0.99,
@@ -139,6 +171,8 @@ create_figure2 <- function(
       panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),
       #axis.text.y = element_text(angle = 90, hjust = 0.5),
       axis.text.y = element_blank(),
+      axis.title.x = element_text(hjust = 0.5),
+      axis.title.y = element_text(hjust = 0.5),
       strip.text.x = element_text(size = 12),
       panel.background = element_rect(fill = NA, color = "grey75"),
       plot.caption = element_text(hjust = 1)
@@ -149,12 +183,12 @@ create_figure2 <- function(
 
 create_figure2(data, "vd1")
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/figures/figure2_language_effect_by_generation_4point.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure3_language_effect_by_generation_4point.png",
   width = 9, height = 6
 )
 
 create_figure2(data, "vd2")
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/figures/figure2_language_effect_by_generation_5point.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure3_language_effect_by_generation_5point.png",
   width = 9, height = 6
 )

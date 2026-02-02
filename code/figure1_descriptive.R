@@ -5,7 +5,7 @@ library(tidyverse)
 library(patchwork)
 
 # Data --------------------------------------------------------------------
-Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
+Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   mutate(yob = year - ses_age,
          generation = case_when(
            yob %in% 1925:1946 ~ "preboomer",
@@ -67,23 +67,27 @@ available_generations <- list(
   "2022" = c("preboomer", "boomer", "x", "y", "z")
 )
 
-## Calculate means and 95% CI by year and generation
+## Calculate weighted means and 95% CI by year and generation
 for (i in 1:length(years_to_keep)) {
   yeari <- years_to_keep[i]
   statsi <- Data %>%
     filter(year == yeari,
            !is.na(souv_unified),
+           !is.na(weight_trimmed),
            generation %in% available_generations[[as.character(yeari)]]) %>%
     group_by(generation) %>%
     summarise(
       n = n(),
-      estimate = mean(souv_unified, na.rm = TRUE),
-      sd = sd(souv_unified, na.rm = TRUE),
-      se = sd / sqrt(n),
+      sum_w = sum(weight_trimmed),
+      estimate = weighted.mean(souv_unified, w = weight_trimmed, na.rm = TRUE),
+      # Weighted variance and SE
+      var_w = sum(weight_trimmed * (souv_unified - estimate)^2) / sum_w,
+      se = sqrt(var_w / n),
       conf.low = estimate - 1.96 * se,
       conf.high = estimate + 1.96 * se,
       .groups = "drop"
     ) %>%
+    select(-sum_w, -var_w) %>%
     mutate(year = yeari,
            response_scale = response_scales[as.character(yeari)])
   if (i == 1) {
