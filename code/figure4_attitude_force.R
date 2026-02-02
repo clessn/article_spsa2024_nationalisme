@@ -6,7 +6,7 @@ library(dplyr)
 library(ggplot2)
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   filter(year >= 2021) |> 
   mutate(yob = year - ses_age,
          generation = case_when(
@@ -30,20 +30,26 @@ table(data$attitude_strength)
 
 # Model ------------------------------------------------------------------
 
-model_data <- data |> 
+model_data <- data |>
   select(
     attitude_strength,
     generation, ses_lang.1,
     ses_gender,
     ses_family_income_centile_cat,
     ses_origin_from_canada.1,
-    ses_educ
+    ses_educ,
+    weight_trimmed
   )
 
+model_data <- model_data |>
+  tidyr::drop_na()
+
 model <- glm(
-  attitude_strength ~ generation * ses_lang.1 + .,
+  attitude_strength ~ generation * ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
   data = model_data,
-  family = binomial()
+  family = binomial(),
+  weights = weight_trimmed
 )
 
 # Graph ------------------------------------------------------------------
@@ -83,7 +89,7 @@ ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
         "Other" = "grey60"
       )
     ) +
-    clessnize::theme_clean_light() +
+    clessnverse::theme_clean_light() +
     xlab("") +
     labs(
       caption = paste0("Predicted probability of having an extreme position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", nrow(model$model), ".")
