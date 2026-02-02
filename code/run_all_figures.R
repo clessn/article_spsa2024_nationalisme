@@ -3,11 +3,19 @@
 
 # Get all figure scripts
 figure_scripts <- list.files(
-
   path = "code",
   pattern = "^figure.*\\.R$",
   full.names = TRUE
 ) |> sort()
+
+# Add appendix scripts
+appendix_scripts <- list.files(
+  path = "code",
+  pattern = "^appendix.*\\.R$",
+  full.names = TRUE
+) |> sort()
+
+figure_scripts <- c(figure_scripts, appendix_scripts)
 
 cat("=== Running all figure scripts ===\n\n")
 cat("Scripts to run:\n")
