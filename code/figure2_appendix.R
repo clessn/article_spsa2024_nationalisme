@@ -347,9 +347,9 @@ latex <- c(latex, "\\centering")
 latex <- c(latex, "\\caption{Difference-in-Differences: Post-Event Effects by Generation}")
 latex <- c(latex, "\\label{tab:appendixD_did_effects}")
 latex <- c(latex, "\\small")
-latex <- c(latex, "\\begin{tabular}{llcccc}")
+latex <- c(latex, "\\begin{tabular}{llccccc}")
 latex <- c(latex, "\\hline")
-latex <- c(latex, "\\textbf{Event} & \\textbf{Type} & \\textbf{Generation} & \\textbf{Effect} & \\textbf{SE} & \\textbf{N} \\\\")
+latex <- c(latex, "\\textbf{Event} & \\textbf{Type} & \\textbf{Generation} & \\textbf{Effect} & \\textbf{SE} & \\textbf{p} & \\textbf{N} \\\\")
 latex <- c(latex, "\\hline")
 
 # Order events properly
@@ -365,6 +365,7 @@ for (i in 1:nrow(gen_table)) {
                     sprintf("$-$%.3f%s", abs(row$estimate), row$sig),
                     sprintf("%.3f%s", row$estimate, row$sig))
   se_fmt <- sprintf("(%.3f)", row$std.error)
+  p_fmt <- ifelse(row$p.value < 0.001, "$<$0.001", sprintf("%.3f", row$p.value))
 
   if (as.character(row$event_name) != current_event) {
     if (current_event != "") {
@@ -372,17 +373,17 @@ for (i in 1:nrow(gen_table)) {
     }
     current_event <- as.character(row$event_name)
     n_fmt <- format(row$n_total, big.mark = ",")
-    latex <- c(latex, sprintf("%s & %s & %s & %s & %s & %s \\\\",
+    latex <- c(latex, sprintf("%s & %s & %s & %s & %s & %s & %s \\\\",
                               row$event_name, row$event_type, row$generation,
-                              est_fmt, se_fmt, n_fmt))
+                              est_fmt, se_fmt, p_fmt, n_fmt))
   } else {
-    latex <- c(latex, sprintf(" & & %s & %s & %s & \\\\",
-                              row$generation, est_fmt, se_fmt))
+    latex <- c(latex, sprintf(" & & %s & %s & %s & %s & \\\\",
+                              row$generation, est_fmt, se_fmt, p_fmt))
   }
 }
 
 latex <- c(latex, "\\hline")
-latex <- c(latex, "\\multicolumn{6}{p{12cm}}{\\footnotesize\\textit{Note:} Effects represent the average change in independence support (0-1 scale) after the event, by generation. Estimated via marginal effects from survey-weighted DiD model with generation interaction and standard errors clustered by survey year. $^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$.} \\\\")
+latex <- c(latex, "\\multicolumn{7}{p{13cm}}{\\footnotesize\\textit{Note:} Effects represent the average change in independence support (0-1 scale) after the event, by generation. Estimated via marginal effects from survey-weighted DiD model with generation interaction and standard errors clustered by survey year. $^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$.} \\\\")
 latex <- c(latex, "\\end{tabular}")
 latex <- c(latex, "\\end{table}")
 latex <- c(latex, "")
