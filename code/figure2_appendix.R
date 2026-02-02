@@ -177,13 +177,18 @@ run_event_study <- function(event, data) {
 
   model <- svyglm(iss_souv ~ event_time_f + generation + ses_lang.1, design = des)
 
-  coefs <- tidy(model, conf.int = TRUE) %>%
+  coefs <- tidy(model) %>%
     filter(grepl("^event_time_f", term)) %>%
     filter(!grepl(":", term)) %>%
     mutate(
       event_time = as.numeric(gsub("event_time_f", "", term)),
       ref_time = ref_time,
-      event_name = event$name
+      event_name = event$name,
+      # Calculate CI and p-value manually
+      conf.low = estimate - 1.96 * std.error,
+      conf.high = estimate + 1.96 * std.error,
+      z_stat = estimate / std.error,
+      p.value = 2 * pnorm(-abs(z_stat))
     )
 
   return(coefs)
@@ -442,13 +447,21 @@ for (i in 1:nrow(parallel_trends)) {
                     sprintf("$-$%.3f%s", abs(row$estimate), row$sig),
                     sprintf("%.3f%s", row$estimate, row$sig))
   se_fmt <- sprintf("(%.3f)", row$std.error)
-  ci_lo <- ifelse(row$conf.low < 0, sprintf("$-$%.3f", abs(row$conf.low)), sprintf("%.3f", row$conf.low))
-  ci_hi <- ifelse(row$conf.high < 0, sprintf("$-$%.3f", abs(row$conf.high)), sprintf("%.3f", row$conf.high))
-  ci_fmt <- sprintf("[%s, %s]", ci_lo, ci_hi)
 
-  latex <- c(latex, sprintf("%s & %d & %d & %s & %s & %s & %.3f \\\\",
+  # Handle NA/NaN in CI and p-value
+  if (is.na(row$conf.low) || is.na(row$conf.high)) {
+    ci_fmt <- "---"
+  } else {
+    ci_lo <- ifelse(row$conf.low < 0, sprintf("$-$%.3f", abs(row$conf.low)), sprintf("%.3f", row$conf.low))
+    ci_hi <- ifelse(row$conf.high < 0, sprintf("$-$%.3f", abs(row$conf.high)), sprintf("%.3f", row$conf.high))
+    ci_fmt <- sprintf("[%s, %s]", ci_lo, ci_hi)
+  }
+
+  p_fmt <- ifelse(is.na(row$p.value) || is.nan(row$p.value), "---", sprintf("%.3f", row$p.value))
+
+  latex <- c(latex, sprintf("%s & %d & %d & %s & %s & %s & %s \\\\",
                             row$event_name, row$event_time, row$ref_time,
-                            est_fmt, se_fmt, ci_fmt, row$p.value))
+                            est_fmt, se_fmt, ci_fmt, p_fmt))
 }
 
 n_sig <- sum(parallel_trends$p.value < 0.05, na.rm = TRUE)
@@ -481,7 +494,7 @@ latex <- c(latex, sprintf("Residual ($\\pi^2/3$) & %.4f & %.1f\\%% \\\\", var_re
 latex <- c(latex, "\\hline")
 latex <- c(latex, sprintf("\\textbf{Total} & %.4f & 100.0\\%% \\\\", var_total))
 latex <- c(latex, "\\hline")
-latex <- c(latex, sprintf("\\multicolumn{3}{p{10cm}}{\\footnotesize\\textit{Note:} Variance decomposition from HAPC-CCREM model \\citep{yang2008}. Residual variance for logistic regression is $\\pi^2/3 \\approx 3.29$. N = %s observations.} \\\\", format(nrow(model_hapc@frame), big.mark = ",")))
+latex <- c(latex, sprintf("\\multicolumn{3}{p{10cm}}{\\footnotesize\\textit{Note:} Variance decomposition from HAPC-CCREM model. Residual variance for logistic regression is $\\pi^2/3 \\approx 3.29$. N = %s observations.} \\\\", format(nrow(model_hapc@frame), big.mark = ",")))
 latex <- c(latex, "\\end{tabular}")
 latex <- c(latex, "\\end{table}")
 latex <- c(latex, "")

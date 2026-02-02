@@ -184,22 +184,18 @@ df_fe <- tibble(
 
 df <- bind_rows(df_estimates, df_fe, df_gof)
 
-# Create LaTeX table
+# Create LaTeX table (simple, with caption and label)
 tab_latex <- kableExtra::kbl(
   df,
   format = "latex",
   booktabs = TRUE,
   escape = FALSE,
   col.names = c("", "Without Party ID", "With Party ID"),
-  align = "lcc"
+  align = "lcc",
+  caption = "Robustness Check: Controlling for Provincial Party Identification",
+  label = "party_id_robustness"
 ) |>
-  kableExtra::kable_styling(latex_options = c("hold_position", "scale_down")) |>
-  kableExtra::footnote(
-    general = "Survey-weighted OLS with SEs clustered by survey year. Sample restricted to respondents with non-missing party identification. Reference categories: Boomer, English, CAQ.",
-    general_title = "Note: ",
-    footnote_as_chunk = TRUE,
-    threeparttable = TRUE
-  )
+  kableExtra::kable_styling(latex_options = c("hold_position", "scale_down"))
 
 # Save
 dir.create("SharedFolder_spsa_article_nationalisme/tables/appendix", showWarnings = FALSE, recursive = TRUE)
