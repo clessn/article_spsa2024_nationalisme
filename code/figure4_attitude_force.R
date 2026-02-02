@@ -104,6 +104,8 @@ ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
     guides(color = "none") +
     theme(
       panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),
+      axis.title.x = element_text(hjust = 0.5),
+      axis.title.y = element_text(hjust = 0.5),
       strip.text.x = element_text(size = 12),
       panel.background = element_rect(fill = NA, color = "grey75"),
       plot.caption = element_text(hjust = 1)

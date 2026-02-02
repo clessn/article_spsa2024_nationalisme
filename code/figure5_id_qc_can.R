@@ -78,11 +78,13 @@ data |>
   theme(
     panel.grid.major.x = element_line(linewidth = 0.2, color = "grey90"),
     panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),
+    axis.title.x = element_text(hjust = 0.5),
+    axis.title.y = element_text(hjust = 0.5),
     axis.text.y = element_text(size = 12),
     plot.caption = element_text(hjust = 1)
   )
 
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/figures/figure4_id_qc_can.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure5_id_qc_can.png",
   width = 8, height = 5.5
 )

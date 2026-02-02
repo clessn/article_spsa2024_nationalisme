@@ -81,6 +81,8 @@ ggplot(plot_data, aes(x = estimate, y = event_name, alpha = sig_cat)) +
   theme_clean_light() +
   theme(
     axis.text.x = element_text(hjust = 1, size = 6.5),
+    axis.title.x = element_text(hjust = 0.5),
+    axis.title.y = element_text(hjust = 0.5),
     strip.text = element_text(face = "plain"),
     legend.position = "bottom",
     legend.box = "horizontal",
