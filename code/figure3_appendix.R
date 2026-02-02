@@ -1,10 +1,11 @@
-# Figure 2 Appendix: Regression tables with and without controls
+# Figure 3 Appendix: Regression tables with and without controls
 # Responds to Reviewer 1 Issue #11
 
 # Packages ----------------------------------------------------------------
 library(dplyr)
 library(tibble)
 library(modelsummary)
+library(survey)  # for svyglm with proper weighting and clustering
 
 # Use classic booktabs format instead of tabularray
 options(modelsummary_factory_default = "kableExtra")
@@ -30,7 +31,7 @@ data$vd[data$vd == 0.66] <- 0.75
 
 # Model data - separate for with/without controls to maximize N
 model_data_no_controls <- data |>
-  select(vd, generation, ses_lang.1, weight_trimmed) |>
+  select(vd, generation, ses_lang.1, year, weight_trimmed) |>
   tidyr::drop_na()
 
 model_data_with_controls <- data |>
@@ -38,25 +39,39 @@ model_data_with_controls <- data |>
     vd, generation, ses_lang.1,
     ses_gender, ses_family_income_centile_cat,
     ses_origin_from_canada.1, ses_educ,
+    year,
     weight_trimmed
   ) |>
   tidyr::drop_na()
 
 # Models ------------------------------------------------------------------
 
-# Model 1: Without controls
-model_no_controls <- lm(
-  vd ~ generation * ses_lang.1,
-  data = model_data_no_controls,
-  weights = weight_trimmed
+# Survey design with clustering by year
+des_no_controls <- svydesign(
+  ids = ~year,
+  weights = ~weight_trimmed,
+  data = model_data_no_controls
 )
 
-# Model 2: With controls
-model_with_controls <- lm(
-  vd ~ generation * ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
-  data = model_data_with_controls,
-  weights = weight_trimmed
+des_with_controls <- svydesign(
+  ids = ~year,
+  weights = ~weight_trimmed,
+  data = model_data_with_controls
+)
+
+# Model 1: Without controls
+model_no_controls <- svyglm(
+  vd ~ generation * ses_lang.1,
+  design = des_no_controls
+)
+
+# Model 2: With controls + year FE
+model_with_controls <- svyglm(
+  vd ~ generation * ses_lang.1 +
+    ses_gender + ses_family_income_centile_cat +
+    ses_origin_from_canada.1 + ses_educ +
+    factor(year),
+  design = des_with_controls
 )
 
 # Create comparison table -------------------------------------------------
@@ -100,14 +115,12 @@ coef_map <- c(
 # Goodness of fit statistics
 gof_map <- tribble(
   ~raw,           ~clean,       ~fmt,
-  "nobs",         "N",          0,
-  "r.squared",    "R²",         3,
-  "adj.r.squared", "Adj. R²",   3
+  "nobs",         "N",          0
 )
 
 # Save outputs ------------------------------------------------------------
 
-# Generate table data
+# Generate table data (svyglm already has proper SEs)
 df_raw <- modelsummary(
   models,
   coef_map = coef_map,
@@ -147,8 +160,15 @@ df_gof <- df_raw |>
   filter(part == "gof") |>
   select(term, `Without controls`, `With controls`)
 
+# Add FE indicators
+df_fe <- tibble(
+  term = c("Year FE"),
+  `Without controls` = c("No"),
+  `With controls` = c("Yes")
+)
+
 # Combine
-df <- bind_rows(df_estimates, df_gof)
+df <- bind_rows(df_estimates, df_fe, df_gof)
 
 # Create LaTeX table
 tab_latex <- kableExtra::kbl(
@@ -159,9 +179,15 @@ tab_latex <- kableExtra::kbl(
   col.names = c("", "Without controls", "With controls"),
   align = "lcc"
 ) |>
-  kableExtra::kable_styling(latex_options = c("hold_position"))
+  kableExtra::kable_styling(latex_options = c("hold_position")) |>
+  kableExtra::footnote(
+    general = "Survey-weighted regression with standard errors clustered by survey year.",
+    general_title = "Note: ",
+    footnote_as_chunk = TRUE,
+    threeparttable = TRUE
+  )
 
 writeLines(as.character(tab_latex),
-           "SharedFolder_spsa_article_nationalisme/tables/appendix/figure2_regression_table.tex")
+           "SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")
 
-message("Table saved to SharedFolder_spsa_article_nationalisme/tables/appendix/figure2_regression_table.tex")
+message("Table saved to SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")

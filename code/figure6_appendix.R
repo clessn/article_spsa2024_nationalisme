@@ -7,6 +7,7 @@ library(dplyr)
 library(tibble)
 library(modelsummary)
 library(kableExtra)
+library(survey)  # for svyglm with proper weighting and clustering
 
 # Use classic booktabs format instead of tabularray
 options(modelsummary_factory_default = "kableExtra")
@@ -34,8 +35,9 @@ data$attitude_strength[data$iss_souv2 %in% c(0, 1)] <- 1
 data$attitude_strength[data$iss_souv2 %in% c(0.25, 0.33, 0.5, 0.66, 0.75)] <- 0
 
 # Model data - separate for with/without controls to maximize N
+# Note: source_id included in both for clustered SEs
 model_data_no_controls <- data |>
-  select(attitude_strength, generation, iss_idcan, weight_trimmed) |>
+  select(attitude_strength, generation, iss_idcan, source_id, weight_trimmed) |>
   tidyr::drop_na()
 
 model_data_with_controls <- data |>
@@ -43,27 +45,42 @@ model_data_with_controls <- data |>
     attitude_strength, generation, iss_idcan,
     ses_lang.1, ses_gender, ses_family_income_centile_cat,
     ses_origin_from_canada.1, ses_educ,
+    source_id,
     weight_trimmed
   ) |>
   tidyr::drop_na()
 
 # Models ------------------------------------------------------------------
 
-# Model 1: Without controls (logistic)
-model_no_controls <- glm(
-  attitude_strength ~ generation * iss_idcan,
-  data = model_data_no_controls,
-  family = binomial(),
-  weights = weight_trimmed
+# Survey design with clustering by source (survey month)
+# Note: year FE not included as data is from 2022 only (Synopsis months)
+des_no_controls <- svydesign(
+  ids = ~source_id,
+  weights = ~weight_trimmed,
+  data = model_data_no_controls
 )
 
-# Model 2: With controls (logistic)
-model_with_controls <- glm(
-  attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
-  data = model_data_with_controls,
-  family = binomial(),
-  weights = weight_trimmed
+des_with_controls <- svydesign(
+  ids = ~source_id,
+  weights = ~weight_trimmed,
+  data = model_data_with_controls
+)
+
+# Model 1: Without controls (logistic)
+model_no_controls <- svyglm(
+  attitude_strength ~ generation * iss_idcan,
+  design = des_no_controls,
+  family = quasibinomial()
+)
+
+# Model 2: With controls + source FE (logistic)
+model_with_controls <- svyglm(
+  attitude_strength ~ generation * iss_idcan +
+    ses_lang.1 + ses_gender + ses_family_income_centile_cat +
+    ses_origin_from_canada.1 + ses_educ +
+    factor(source_id),
+  design = des_with_controls,
+  family = quasibinomial()
 )
 
 # Create comparison table -------------------------------------------------
@@ -111,7 +128,7 @@ gof_map <- tribble(
 
 # Save outputs ------------------------------------------------------------
 
-# Generate table data
+# Generate table data (svyglm already has proper SEs)
 df_raw <- modelsummary(
   models,
   coef_map = coef_map,
@@ -150,8 +167,15 @@ df_gof <- df_raw |>
   filter(part == "gof") |>
   select(term, `Without controls`, `With controls`)
 
+# Add FE indicators (only Source FE, data is 2022 only)
+df_fe <- tibble(
+  term = c("Source FE"),
+  `Without controls` = c("No"),
+  `With controls` = c("Yes")
+)
+
 # Combine
-df <- bind_rows(df_estimates, df_gof)
+df <- bind_rows(df_estimates, df_fe, df_gof)
 
 # Create LaTeX table
 tab_latex <- kableExtra::kbl(
@@ -162,7 +186,13 @@ tab_latex <- kableExtra::kbl(
   col.names = c("", "Without controls", "With controls"),
   align = "lcc"
 ) |>
-  kableExtra::kable_styling(latex_options = c("hold_position"))
+  kableExtra::kable_styling(latex_options = c("hold_position")) |>
+  kableExtra::footnote(
+    general = "Survey-weighted logistic regression with standard errors clustered by survey month. Data from 2022 Synopsis surveys only.",
+    general_title = "Note: ",
+    footnote_as_chunk = TRUE,
+    threeparttable = TRUE
+  )
 
 writeLines(as.character(tab_latex),
            "SharedFolder_spsa_article_nationalisme/tables/appendix/figure6_regression_table.tex")

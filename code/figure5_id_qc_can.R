@@ -59,7 +59,7 @@ data |>
     aes(xmin = ci_lower, xmax = ci_upper),
     linewidth = 0.1
   ) +
-  clessnverse::theme_clean_light() +
+  clessnize::theme_clean_light() +
   scale_x_continuous(
     limits = c(0.45, 0.75),
     breaks = seq(0, 100, by = 10)/100,
