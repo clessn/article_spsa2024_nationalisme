@@ -1,93 +1,159 @@
-# Figure 5 Appendix: Regression tables with and without controls
-# Responds to Reviewer 1 Issue #11
+# Figure 6 Appendix: Regression tables with and without controls
+# Responds to Reviewer 1 Issue #11 (with/without controls)
+# Also responds to Issue #16 (Gen Z definition robustness check)
 # Logistic regression predicting attitude strength with generation x identity interaction
 
 # Packages ----------------------------------------------------------------
 library(dplyr)
 library(tibble)
 library(modelsummary)
+library(survey)
 library(kableExtra)
-library(survey)  # for svyglm with proper weighting and clustering
 
 # Use classic booktabs format instead of tabularray
 options(modelsummary_factory_default = "kableExtra")
 options(knitr.table.format = "latex")
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
+data_raw <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   filter(
     year >= 2021 &
     source_id %in% c("january", "february", "march", "april", "may", "june")
   ) |>
-  mutate(yob = year - ses_age,
-         generation = case_when(
-           yob %in% 1925:1946 ~ "preboomer",
-           yob %in% 1947:1961 ~ "boomer",
-           yob %in% 1962:1976 ~ "x",
-           yob %in% 1977:1991 ~ "y",
-           yob %in% 1992:2003 ~ "z"
-         ),
-         generation = factor(generation, levels = c("boomer", "preboomer", "x", "y", "z")))
+  mutate(yob = year - ses_age)
+
+# Function to create generation variable with different Gen Z cutoffs
+create_generation_var <- function(data, genz_start = 1992) {
+  geny_end <- genz_start - 1
+  data |>
+    mutate(
+      generation = case_when(
+        yob %in% 1925:1946 ~ "preboomer",
+        yob %in% 1947:1961 ~ "boomer",
+        yob %in% 1962:1976 ~ "x",
+        yob %in% 1977:geny_end ~ "y",
+        yob >= genz_start ~ "z"
+      ),
+      generation = factor(generation, levels = c("boomer", "preboomer", "x", "y", "z"))
+    )
+}
+
+# Create datasets with different Gen Z definitions
+data_1992 <- create_generation_var(data_raw, genz_start = 1992)
+data_1995 <- create_generation_var(data_raw, genz_start = 1995)
+data_1997 <- create_generation_var(data_raw, genz_start = 1997)
 
 # Create binary DV: 1 = strong attitude (0 or 1), 0 = weak attitude (middle values)
-data$attitude_strength <- NA
-data$attitude_strength[data$iss_souv2 %in% c(0, 1)] <- 1
-data$attitude_strength[data$iss_souv2 %in% c(0.25, 0.33, 0.5, 0.66, 0.75)] <- 0
+prepare_dv <- function(data) {
+  data$attitude_strength <- NA
+  data$attitude_strength[data$iss_souv2 %in% c(0, 1)] <- 1
+  data$attitude_strength[data$iss_souv2 %in% c(0.25, 0.33, 0.5, 0.66, 0.75)] <- 0
+  return(data)
+}
+
+data_1992 <- prepare_dv(data_1992)
+data_1995 <- prepare_dv(data_1995)
+data_1997 <- prepare_dv(data_1997)
 
 # Model data - separate for with/without controls to maximize N
-# Note: source_id included in both for clustered SEs
-model_data_no_controls <- data |>
+# Note: source_id used for clustering since all data is from 2022 (single year)
+model_data_no_controls_1992 <- data_1992 |>
   select(attitude_strength, generation, iss_idcan, source_id, weight_trimmed) |>
   tidyr::drop_na()
 
-model_data_with_controls <- data |>
+model_data_with_controls_1992 <- data_1992 |>
   select(
     attitude_strength, generation, iss_idcan,
     ses_lang.1, ses_gender, ses_family_income_centile_cat,
     ses_origin_from_canada.1, ses_educ,
-    source_id,
-    weight_trimmed
+    source_id, weight_trimmed
+  ) |>
+  tidyr::drop_na()
+
+model_data_with_controls_1995 <- data_1995 |>
+  select(
+    attitude_strength, generation, iss_idcan,
+    ses_lang.1, ses_gender, ses_family_income_centile_cat,
+    ses_origin_from_canada.1, ses_educ,
+    source_id, weight_trimmed
+  ) |>
+  tidyr::drop_na()
+
+model_data_with_controls_1997 <- data_1997 |>
+  select(
+    attitude_strength, generation, iss_idcan,
+    ses_lang.1, ses_gender, ses_family_income_centile_cat,
+    ses_origin_from_canada.1, ses_educ,
+    source_id, weight_trimmed
   ) |>
   tidyr::drop_na()
 
 # Models ------------------------------------------------------------------
 
-# Survey design with clustering by source (survey month)
-# Note: year FE not included as data is from 2022 only (Synopsis months)
-des_no_controls <- svydesign(
+# Survey designs with clustering by source_id (month) since all data is from 2022
+des_no_controls_1992 <- svydesign(
   ids = ~source_id,
   weights = ~weight_trimmed,
-  data = model_data_no_controls
+  data = model_data_no_controls_1992
 )
 
-des_with_controls <- svydesign(
+des_with_controls_1992 <- svydesign(
   ids = ~source_id,
   weights = ~weight_trimmed,
-  data = model_data_with_controls
+  data = model_data_with_controls_1992
 )
 
-# Model 1: Without controls (logistic)
+des_with_controls_1995 <- svydesign(
+  ids = ~source_id,
+  weights = ~weight_trimmed,
+  data = model_data_with_controls_1995
+)
+
+des_with_controls_1997 <- svydesign(
+  ids = ~source_id,
+  weights = ~weight_trimmed,
+  data = model_data_with_controls_1997
+)
+
+# Model 1: Without controls (Gen Z = 1992+)
 model_no_controls <- svyglm(
   attitude_strength ~ generation * iss_idcan,
-  design = des_no_controls,
+  design = des_no_controls_1992,
   family = quasibinomial()
 )
 
-# Model 2: With controls + source FE (logistic)
-model_with_controls <- svyglm(
-  attitude_strength ~ generation * iss_idcan +
-    ses_lang.1 + ses_gender + ses_family_income_centile_cat +
-    ses_origin_from_canada.1 + ses_educ +
-    factor(source_id),
-  design = des_with_controls,
+# Model 2: With controls (Gen Z = 1992+)
+# Note: No year FE since all data is from 2022
+model_with_controls_1992 <- svyglm(
+  attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
+  design = des_with_controls_1992,
+  family = quasibinomial()
+)
+
+# Model 3: With controls (Gen Z = 1995+) - Robustness check
+model_with_controls_1995 <- svyglm(
+  attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
+  design = des_with_controls_1995,
+  family = quasibinomial()
+)
+
+# Model 4: With controls (Gen Z = 1997+) - Robustness check (Pew definition)
+model_with_controls_1997 <- svyglm(
+  attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
+  design = des_with_controls_1997,
   family = quasibinomial()
 )
 
 # Create comparison table -------------------------------------------------
 
 models <- list(
-  "Without controls" = model_no_controls,
-  "With controls" = model_with_controls
+  "1992+ (no controls)" = model_no_controls,
+  "1992+" = model_with_controls_1992,
+  "1995+" = model_with_controls_1995,
+  "1997+" = model_with_controls_1997
 )
 
 # Coefficient mapping for cleaner labels
@@ -121,14 +187,12 @@ coef_map <- c(
 # Goodness of fit statistics
 gof_map <- tribble(
   ~raw,           ~clean,       ~fmt,
-  "nobs",         "N",          0,
-  "AIC",          "AIC",        1,
-  "BIC",          "BIC",        1
+  "nobs",         "N",          0
 )
 
 # Save outputs ------------------------------------------------------------
 
-# Generate table data (svyglm already has proper SEs)
+# Generate table data
 df_raw <- modelsummary(
   models,
   coef_map = coef_map,
@@ -143,7 +207,7 @@ df_estimates <- df_raw |>
   select(-part) |>
   group_by(term) |>
   summarise(
-    across(c(`Without controls`, `With controls`),
+    across(c(`1992+ (no controls)`, `1992+`, `1995+`, `1997+`),
            ~ {
              est <- .x[statistic == "estimate"]
              se <- gsub("[\\(\\)]", "", .x[statistic == "std.error"])
@@ -165,13 +229,15 @@ df_estimates <- df_estimates |>
 # Process GOF stats (keep as is)
 df_gof <- df_raw |>
   filter(part == "gof") |>
-  select(term, `Without controls`, `With controls`)
+  select(term, `1992+ (no controls)`, `1992+`, `1995+`, `1997+`)
 
-# Add FE indicators (only Source FE, data is 2022 only)
+# Add FE indicators (no year FE since all data from 2022)
 df_fe <- tibble(
-  term = c("Source FE"),
-  `Without controls` = c("No"),
-  `With controls` = c("Yes")
+  term = c("Year FE"),
+  `1992+ (no controls)` = c("No"),
+  `1992+` = c("No"),
+  `1995+` = c("No"),
+  `1997+` = c("No")
 )
 
 # Combine
@@ -183,12 +249,13 @@ tab_latex <- kableExtra::kbl(
   format = "latex",
   booktabs = TRUE,
   escape = FALSE,
-  col.names = c("", "Without controls", "With controls"),
-  align = "lcc"
+  col.names = c("", "1992+ (no controls)", "1992+", "1995+", "1997+"),
+  align = "lcccc"
 ) |>
-  kableExtra::kable_styling(latex_options = c("hold_position")) |>
+  kableExtra::kable_styling(latex_options = c("hold_position", "scale_down")) |>
+  kableExtra::add_header_above(c(" " = 1, " " = 1, "With controls" = 3)) |>
   kableExtra::footnote(
-    general = "Survey-weighted logistic regression with standard errors clustered by survey month. Data from 2022 Synopsis surveys only.",
+    general = "Logistic regression (quasibinomial). Survey-weighted with standard errors clustered by survey month. Data from Synopsis Jan-Jun 2022.",
     general_title = "Note: ",
     footnote_as_chunk = TRUE,
     threeparttable = TRUE
