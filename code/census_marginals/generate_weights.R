@@ -24,8 +24,8 @@ library(survey)
 
 # Chemins
 # Assumes script is running from code/census_marginals/
-data_dir <- "../../SharedFolder_spsa_article_nationalisme/data"
-marginals_path <- "marginals_all.rds"
+data_dir <- "SharedFolder_spsa_article_nationalisme/data/"
+marginals_path <- "code/census_marginals/marginals_all.rds"
 
 # Années de recensement disponibles
 CENSUS_YEARS <- c(1961, 1966, 1971, 1976, 1981, 1986, 1991, 1996, 2001, 2006, 2011, 2016, 2021)
