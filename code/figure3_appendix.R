@@ -11,7 +11,7 @@ options(modelsummary_factory_default = "kableExtra")
 options(knitr.table.format = "latex")
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   filter(year >= 2021) |>
   mutate(yob = year - ses_age,
          generation = case_when(
@@ -30,14 +30,15 @@ data$vd[data$vd == 0.66] <- 0.75
 
 # Model data - separate for with/without controls to maximize N
 model_data_no_controls <- data |>
-  select(vd, generation, ses_lang.1) |>
+  select(vd, generation, ses_lang.1, weight_trimmed) |>
   tidyr::drop_na()
 
 model_data_with_controls <- data |>
   select(
     vd, generation, ses_lang.1,
     ses_gender, ses_family_income_centile_cat,
-    ses_origin_from_canada.1, ses_educ
+    ses_origin_from_canada.1, ses_educ,
+    weight_trimmed
   ) |>
   tidyr::drop_na()
 
@@ -46,14 +47,16 @@ model_data_with_controls <- data |>
 # Model 1: Without controls
 model_no_controls <- lm(
   vd ~ generation * ses_lang.1,
-  data = model_data_no_controls
+  data = model_data_no_controls,
+  weights = weight_trimmed
 )
 
 # Model 2: With controls
 model_with_controls <- lm(
   vd ~ generation * ses_lang.1 + ses_gender +
     ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
-  data = model_data_with_controls
+  data = model_data_with_controls,
+  weights = weight_trimmed
 )
 
 # Create comparison table -------------------------------------------------

@@ -19,7 +19,7 @@ dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 message("\n========== LOADING DATA ==========\n")
 
-Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
+Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   mutate(
     yob = year - ses_age,
     generation = case_when(
@@ -101,7 +101,7 @@ run_did_full <- function(event, data) {
   n_pre <- sum(data_event$post_event == 0)
   n_post <- sum(data_event$post_event == 1)
 
-  model <- lm(iss_souv ~ post_event * generation + ses_lang.1, data = data_event)
+  model <- lm(iss_souv ~ post_event * generation + ses_lang.1, data = data_event, weights = weight_trimmed)
 
   gen_effects <- avg_slopes(model, variables = "post_event", by = "generation") %>%
     as.data.frame() %>%
@@ -158,7 +158,7 @@ run_event_study <- function(event, data) {
   ref_time <- ref_year - event$year
   data_event$event_time_f <- relevel(data_event$event_time_f, ref = as.character(ref_time))
 
-  model <- lm(iss_souv ~ event_time_f + generation + ses_lang.1, data = data_event)
+  model <- lm(iss_souv ~ event_time_f + generation + ses_lang.1, data = data_event, weights = weight_trimmed)
 
   coefs <- tidy(model, conf.int = TRUE) %>%
     filter(grepl("^event_time_f", term)) %>%
@@ -222,6 +222,10 @@ parallel_trends <- bind_rows(pt_results) %>%
     )
   )
 
+# Save results for Figure 2 graph
+dir.create("SharedFolder_spsa_article_nationalisme/tables/event_study", showWarnings = FALSE, recursive = TRUE)
+write.csv(gen_table, "SharedFolder_spsa_article_nationalisme/tables/event_study/did_results.csv", row.names = FALSE)
+
 # ==============================================================================
 # PART 2: HAPC-CCREM ANALYSIS
 # ==============================================================================
@@ -239,18 +243,21 @@ model_hapc <- glmer(
   iss_souv ~ age_scaled + I(age_scaled^2) +
     (1 | generation) + (1 | year_factor),
   data = data_hapc,
+  weights = weight_trimmed,
   family = binomial
 )
 
 model_no_cohort <- glmer(
   iss_souv ~ age_scaled + I(age_scaled^2) + (1 | year_factor),
   data = data_hapc,
+  weights = weight_trimmed,
   family = binomial
 )
 
 model_no_period <- glmer(
   iss_souv ~ age_scaled + I(age_scaled^2) + (1 | generation),
   data = data_hapc,
+  weights = weight_trimmed,
   family = binomial
 )
 

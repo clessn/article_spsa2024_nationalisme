@@ -5,7 +5,7 @@ library(dplyr)
 library(ggplot2)
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>% 
   filter(year >= 2021) |> 
   mutate(yob = year - ses_age,
          generation = case_when(
@@ -56,12 +56,14 @@ create_model <- function(
       ses_gender,
       ses_family_income_centile_cat,
       ses_origin_from_canada.1,
-      ses_educ
+      ses_educ,
+      weight_trimmed
     ) |> 
     tidyr::drop_na()
   model <- lm(
     vd ~ generation * ses_lang.1 + .,
-    data = model_data
+    data = model_data,
+    weights = weight_trimmed
   )
   return(model)
 }
@@ -108,7 +110,7 @@ create_figure2 <- function(
         "Other" = "grey60"
       )
     ) +
-    clessnize::theme_clean_light() +
+    clessnverse::theme_clean_light() +
     xlab("") +
     labs(
       caption = paste0("Predicted position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", nrow(model$model), ".")
@@ -149,12 +151,12 @@ create_figure2 <- function(
 
 create_figure2(data, "vd1")
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/figures/figure2_language_effect_by_generation_4point.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure3_language_effect_by_generation_4point.png",
   width = 9, height = 6
 )
 
 create_figure2(data, "vd2")
 ggsave(
-  "SharedFolder_spsa_article_nationalisme/figures/figure2_language_effect_by_generation_5point.png",
+  "SharedFolder_spsa_article_nationalisme/figures/figure3_language_effect_by_generation_5point.png",
   width = 9, height = 6
 )

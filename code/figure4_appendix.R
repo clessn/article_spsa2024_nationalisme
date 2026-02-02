@@ -13,7 +13,7 @@ options(modelsummary_factory_default = "kableExtra")
 options(knitr.table.format = "latex")
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   filter(year >= 2021) |>
   mutate(yob = year - ses_age,
          generation = case_when(
@@ -32,14 +32,15 @@ data$attitude_strength[data$iss_souv2 %in% c(0.25, 0.33, 0.5, 0.66, 0.75)] <- 0
 
 # Model data - separate for with/without controls to maximize N
 model_data_no_controls <- data |>
-  select(attitude_strength, generation, ses_lang.1) |>
+  select(attitude_strength, generation, ses_lang.1, weight_trimmed) |>
   tidyr::drop_na()
 
 model_data_with_controls <- data |>
   select(
     attitude_strength, generation, ses_lang.1,
     ses_gender, ses_family_income_centile_cat,
-    ses_origin_from_canada.1, ses_educ
+    ses_origin_from_canada.1, ses_educ,
+    weight_trimmed
   ) |>
   tidyr::drop_na()
 
@@ -49,7 +50,8 @@ model_data_with_controls <- data |>
 model_no_controls <- glm(
   attitude_strength ~ generation * ses_lang.1,
   data = model_data_no_controls,
-  family = binomial()
+  family = binomial(),
+  weights = weight_trimmed
 )
 
 # Model 2: With controls (logistic)
@@ -57,7 +59,8 @@ model_with_controls <- glm(
   attitude_strength ~ generation * ses_lang.1 + ses_gender +
     ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
   data = model_data_with_controls,
-  family = binomial()
+  family = binomial(),
+  weights = weight_trimmed
 )
 
 # Create comparison table -------------------------------------------------
@@ -162,6 +165,6 @@ tab_latex <- kableExtra::kbl(
   kableExtra::kable_styling(latex_options = c("hold_position"))
 
 writeLines(as.character(tab_latex),
-           "SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")
+           "SharedFolder_spsa_article_nationalisme/tables/appendix/figure4_regression_table.tex")
 
-message("Table saved to SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")
+message("Table saved to SharedFolder_spsa_article_nationalisme/tables/appendix/figure4_regression_table.tex")
