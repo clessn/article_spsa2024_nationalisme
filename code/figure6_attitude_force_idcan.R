@@ -6,11 +6,11 @@ library(dplyr)
 library(ggplot2)
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   filter(
     year >= 2021 &
     source_id %in% c("january", "february", "march", "april", "may", "june")
-  ) |> 
+  ) |>
   mutate(yob = year - ses_age,
          generation = case_when(
            yob %in% 1925:1946 ~ "preboomer",
@@ -33,20 +33,24 @@ table(data$attitude_strength)
 
 # Model ------------------------------------------------------------------
 
-model_data <- data |> 
+model_data <- data |>
   select(
     attitude_strength,
     generation, ses_lang.1,
     ses_gender,
     ses_family_income_centile_cat,
     ses_origin_from_canada.1,
-    ses_educ, iss_idcan
-  )
+    ses_educ, iss_idcan,
+    weight_trimmed
+  ) |>
+  tidyr::drop_na()
 
 model <- glm(
-  attitude_strength ~ generation * iss_idcan + .,
+  attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
   data = model_data,
-  family = binomial()
+  family = binomial(),
+  weights = weight_trimmed
 )
 
 # Graph ------------------------------------------------------------------
@@ -98,7 +102,7 @@ ggplot(
         "Canadian\nbefore\n" = 22
       )
     ) +
-    clessnize::theme_clean_light() +
+    clessnverse::theme_clean_light() +
     xlab("") +
     labs(
       caption = paste0("Predicted probability of having an extreme position on the independence scale with interaction between generation and national primary identification\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2022, n = ", nrow(model$model), ".")
