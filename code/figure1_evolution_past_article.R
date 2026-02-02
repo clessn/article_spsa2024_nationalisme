@@ -5,7 +5,7 @@ library(tidyverse)
 library(patchwork)
 
 # Data --------------------------------------------------------------------
-Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>% 
+Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>% 
   mutate(yob = year - ses_age,
          generation = case_when(
            yob %in% 1925:1946 ~ "preboomer",
@@ -67,7 +67,8 @@ for (i in 1:length(years_to_keep)){
     model <- lm(iss_souv ~ generation * ses_lang.1 + ses_geoloc.1 +
                   ses_gender + ses_family_income_centile_cat +
                   ses_origin_from_canada.1 + int_pol,
-                data = mdata)
+                data = mdata,
+                weights = weight_trimmed)
   } else if (yeari == 1993){ ## exception for 1993. GO HABS GO
     mdata <- Data %>% 
       filter(year == yeari) %>% 
@@ -77,7 +78,8 @@ for (i in 1:length(years_to_keep)){
                      ses_family_income_centile_cat)
     model <- lm(iss_souv2 ~ generation * ses_lang.1 + ses_geoloc.1 +
                   ses_gender + ses_family_income_centile_cat + int_pol,
-                data = mdata)
+                data = mdata,
+                weights = weight_trimmed)
   } else if (yeari == 2023){ ## exception for 2023
     mdata <- Data %>% 
       filter(year == yeari) %>% 
@@ -94,7 +96,8 @@ for (i in 1:length(years_to_keep)){
     model <- lm(iss_souv2 ~ generation * ses_lang.1 + ses_geoloc.1 +
                   ses_gender + ses_family_income_centile_cat +
                   ses_origin_from_canada.1 + int_pol,
-                data = mdata)
+                data = mdata,
+                weights = weight_trimmed)
   } else { ## for the rest
     mdata <- Data %>% 
       filter(year == yeari) %>% 
@@ -109,7 +112,8 @@ for (i in 1:length(years_to_keep)){
     model <- lm(iss_souv2 ~ generation * ses_lang.1 + ses_geoloc.1 +
                   ses_gender + ses_family_income_centile_cat +
                   ses_origin_from_canada.1 + int_pol,
-                data = mdata)
+                data = mdata,
+                weights = weight_trimmed)
   }
   if (i == 1){
     linear_models <- list()
@@ -141,7 +145,8 @@ for (i in c(1997, 2000)){
   model <- lm(iss_souv ~ generation * ses_lang.1 +
                 ses_gender + ses_family_income_centile_cat +
                 ses_origin_from_canada.1 + int_pol,
-              data = mdata)
+              data = mdata,
+              weights = weight_trimmed)
   if (i == 1997){
     linear_models_19972000 <- list()
     linear_models_19972000[[as.character(i)]] <- model

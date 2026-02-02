@@ -5,7 +5,7 @@ library(tidyverse)
 library(patchwork)
 
 # Data --------------------------------------------------------------------
-Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
+Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
   mutate(yob = year - ses_age,
          generation = case_when(
            yob %in% 1925:1946 ~ "preboomer",
@@ -77,8 +77,7 @@ for (i in 1:length(years_to_keep)) {
     group_by(generation) %>%
     summarise(
       n = n(),
-      estimate = mean(souv_unified, na.rm = TRUE),
-      ## weighted.mean(souv_unified, w = weight, na.rm = TRUE)
+      estimate = weighted.mean(souv_unified, w = weight_trimmed, na.rm = TRUE),
       sd = sd(souv_unified, na.rm = TRUE),
       se = sd / sqrt(n),
       conf.low = estimate - 1.96 * se,
