@@ -1,12 +1,12 @@
-## Fetch 1976 census data
-## Source: https://mdl.library.utoronto.ca/collections/numeric-data/census-canada/1976/statistics
-## age by sex: http://mdl.library.utoronto.ca/sites/default/public/mdldata/open/canada/national/statcan/census/1976/statistics/bst/eadema10_spss.zip
-## mother tongue by sex: http://mdl.library.utoronto.ca/sites/default/public/mdldata/open/canada/national/statcan/census/1976/statistics/bst/eadema20_spss.zip
+## Fetch 1981 census data
+## Source: https://mdl.library.utoronto.ca/collections/numeric-data/census-canada/1981/statistics
+## mother tongue: https://mdl.library.utoronto.ca/sites/default/public/mdldata/open/canada/national/statcan/census/1981/statistics/bst/cnd_eac81a10.zip
+## age: https://mdl.library.utoronto.ca/sites/default/public/mdldata/open/canada/national/statcan/census/1981/statistics/bst/cnd_ead81a10.zip
 
 library(dplyr)
 
 # Paths
-raw_dir <- "SharedFolder_spsa_article_nationalisme/data/census/marginals/raw/1976"
+raw_dir <- "SharedFolder_spsa_article_nationalisme/data/census/marginals/raw/1981"
 
 # Create directory if it doesn't exist
 if (!dir.exists(raw_dir)) {
@@ -15,8 +15,8 @@ if (!dir.exists(raw_dir)) {
 
 # Files to download with prefixes
 files <- list(
-  AGE = "http://mdl.library.utoronto.ca/sites/default/public/mdldata/open/canada/national/statcan/census/1976/statistics/bst/eadema10_spss.zip",
-  LANG = "http://mdl.library.utoronto.ca/sites/default/public/mdldata/open/canada/national/statcan/census/1976/statistics/bst/eadema20_spss.zip"
+  LANG = "https://mdl.library.utoronto.ca/sites/default/public/mdldata/open/canada/national/statcan/census/1981/statistics/bst/cnd_eac81a10.zip",
+  AGE = "https://mdl.library.utoronto.ca/sites/default/public/mdldata/open/canada/national/statcan/census/1981/statistics/bst/cnd_ead81a10.zip"
 )
 
 # Download and extract each file with prefix
