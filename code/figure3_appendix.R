@@ -1,5 +1,6 @@
-# Figure 2 Appendix: Regression tables with and without controls
-# Responds to Reviewer 1 Issue #11
+# Figure 3 Appendix: Regression tables with and without controls
+# Responds to Reviewer 1 Issue #11 (with/without controls)
+# Also responds to Issue #16 (Gen Z definition robustness check)
 
 # Packages ----------------------------------------------------------------
 library(dplyr)
@@ -11,29 +12,69 @@ options(modelsummary_factory_default = "kableExtra")
 options(knitr.table.format = "latex")
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
+data_raw <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v1.rds") %>%
   filter(year >= 2021) |>
-  mutate(yob = year - ses_age,
-         generation = case_when(
-           yob %in% 1925:1946 ~ "preboomer",
-           yob %in% 1947:1961 ~ "boomer",
-           yob %in% 1962:1976 ~ "x",
-           yob %in% 1977:1991 ~ "y",
-           yob %in% 1992:2003 ~ "z"
-         ),
-         generation = factor(generation, levels = c("boomer", "preboomer", "x", "y", "z")))
+  mutate(yob = year - ses_age)
+
+# Function to create generation variable with different Gen Z cutoffs
+create_generation_var <- function(data, genz_start = 1992) {
+  # Adjust Gen Y end to be one year before Gen Z start
+  geny_end <- genz_start - 1
+  data |>
+    mutate(
+      generation = case_when(
+        yob %in% 1925:1946 ~ "preboomer",
+        yob %in% 1947:1961 ~ "boomer",
+        yob %in% 1962:1976 ~ "x",
+        yob %in% 1977:geny_end ~ "y",
+        yob >= genz_start ~ "z"
+      ),
+      generation = factor(generation, levels = c("boomer", "preboomer", "x", "y", "z"))
+    )
+}
+
+# Create datasets with different Gen Z definitions
+data_1992 <- create_generation_var(data_raw, genz_start = 1992)
+data_1995 <- create_generation_var(data_raw, genz_start = 1995)
+data_1997 <- create_generation_var(data_raw, genz_start = 1997)
 
 # Prepare DV (using 5-point scale version)
-data$vd <- data$iss_souv2
-data$vd[data$vd == 0.33] <- 0.25
-data$vd[data$vd == 0.66] <- 0.75
+prepare_dv <- function(data) {
+  data$vd <- data$iss_souv2
+  data$vd[data$vd == 0.33] <- 0.25
+  data$vd[data$vd == 0.66] <- 0.75
+  return(data)
+}
+
+data_1992 <- prepare_dv(data_1992)
+data_1995 <- prepare_dv(data_1995)
+data_1997 <- prepare_dv(data_1997)
 
 # Model data - separate for with/without controls to maximize N
-model_data_no_controls <- data |>
+# For 1992 definition (main model)
+model_data_no_controls_1992 <- data_1992 |>
   select(vd, generation, ses_lang.1) |>
   tidyr::drop_na()
 
-model_data_with_controls <- data |>
+model_data_with_controls_1992 <- data_1992 |>
+  select(
+    vd, generation, ses_lang.1,
+    ses_gender, ses_family_income_centile_cat,
+    ses_origin_from_canada.1, ses_educ
+  ) |>
+  tidyr::drop_na()
+
+# For 1995 definition (robustness)
+model_data_with_controls_1995 <- data_1995 |>
+  select(
+    vd, generation, ses_lang.1,
+    ses_gender, ses_family_income_centile_cat,
+    ses_origin_from_canada.1, ses_educ
+  ) |>
+  tidyr::drop_na()
+
+# For 1997 definition (robustness)
+model_data_with_controls_1997 <- data_1997 |>
   select(
     vd, generation, ses_lang.1,
     ses_gender, ses_family_income_centile_cat,
@@ -43,24 +84,40 @@ model_data_with_controls <- data |>
 
 # Models ------------------------------------------------------------------
 
-# Model 1: Without controls
+# Model 1: Without controls (Gen Z = 1992+)
 model_no_controls <- lm(
   vd ~ generation * ses_lang.1,
-  data = model_data_no_controls
+  data = model_data_no_controls_1992
 )
 
-# Model 2: With controls
-model_with_controls <- lm(
+# Model 2: With controls (Gen Z = 1992+)
+model_with_controls_1992 <- lm(
   vd ~ generation * ses_lang.1 + ses_gender +
     ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
-  data = model_data_with_controls
+  data = model_data_with_controls_1992
+)
+
+# Model 3: With controls (Gen Z = 1995+) - Robustness check
+model_with_controls_1995 <- lm(
+  vd ~ generation * ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
+  data = model_data_with_controls_1995
+)
+
+# Model 4: With controls (Gen Z = 1997+) - Robustness check (Pew definition)
+model_with_controls_1997 <- lm(
+  vd ~ generation * ses_lang.1 + ses_gender +
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
+  data = model_data_with_controls_1997
 )
 
 # Create comparison table -------------------------------------------------
 
 models <- list(
-  "Without controls" = model_no_controls,
-  "With controls" = model_with_controls
+  "1992+ (no controls)" = model_no_controls,
+  "1992+" = model_with_controls_1992,
+  "1995+" = model_with_controls_1995,
+  "1997+" = model_with_controls_1997
 )
 
 # Coefficient mapping for cleaner labels
@@ -119,7 +176,7 @@ df_estimates <- df_raw |>
   select(-part) |>
   group_by(term) |>
   summarise(
-    across(c(`Without controls`, `With controls`),
+    across(c(`1992+ (no controls)`, `1992+`, `1995+`, `1997+`),
            ~ {
              est <- .x[statistic == "estimate"]
              se <- gsub("[\\(\\)]", "", .x[statistic == "std.error"])
@@ -142,7 +199,7 @@ df_estimates <- df_estimates |>
 # Process GOF stats (keep as is)
 df_gof <- df_raw |>
   filter(part == "gof") |>
-  select(term, `Without controls`, `With controls`)
+  select(term, `1992+ (no controls)`, `1992+`, `1995+`, `1997+`)
 
 # Combine
 df <- bind_rows(df_estimates, df_gof)
@@ -153,12 +210,13 @@ tab_latex <- kableExtra::kbl(
   format = "latex",
   booktabs = TRUE,
   escape = FALSE,
-  col.names = c("", "Without controls", "With controls"),
-  align = "lcc"
+  col.names = c("", "1992+ (no controls)", "1992+", "1995+", "1997+"),
+  align = "lcccc"
 ) |>
-  kableExtra::kable_styling(latex_options = c("hold_position"))
+  kableExtra::kable_styling(latex_options = c("hold_position", "scale_down")) |>
+  kableExtra::add_header_above(c(" " = 1, " " = 1, "With controls" = 3))
 
 writeLines(as.character(tab_latex),
-           "SharedFolder_spsa_article_nationalisme/tables/appendix/figure2_regression_table.tex")
+           "SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")
 
-message("Table saved to SharedFolder_spsa_article_nationalisme/tables/appendix/figure2_regression_table.tex")
+message("Table saved to SharedFolder_spsa_article_nationalisme/tables/appendix/figure3_regression_table.tex")
