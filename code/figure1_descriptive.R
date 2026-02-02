@@ -17,11 +17,12 @@ Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
          generation = factor(generation))
 
 # Years and response scales -----------------------------------------------
-years_to_keep <- c(1974, 1979, 1984, 1988, 1993, 1997, 2000,
+years_to_keep <- c(1968, 1974, 1979, 1984, 1988, 1993, 1997, 2000,
                    2004, 2008, 2015, 2019, 2021, 2022)
 
 response_scales <- c(
 
+  `1968` = "point5",
   `1974` = "dichotomous",
   `1979` = "point4",
   `1984` = "dichotomous",
@@ -52,6 +53,7 @@ Data <- Data %>%
 ## Available generations per year (only include when members are 18+)
 ## Same as in figure1_evolution_past_article.R
 available_generations <- list(
+  "1968" = c("preboomer"),
   "1974" = c("preboomer", "boomer"),
   "1979" = c("preboomer", "boomer"),
   "1984" = c("preboomer", "boomer", "x"),
@@ -110,8 +112,8 @@ total_n <- sum(graphsData$n)
 
 ### important events
 events_df <- data.frame(
-  year = c(1980, 1990, 1995),
-  label = c("Referendum", "Meech\nFailure", "Referendum")
+  year = c(1976, 1980, 1990, 1995),
+  label = c("PQ Election", "Referendum", "Meech\nFailure", "Referendum")
 )
 
 ### generations labels
@@ -178,6 +180,7 @@ generation_plot <- function(gen_highlight){
       show.legend = FALSE
     ) +
     theme_minimal() +
+    scale_x_continuous(breaks = seq(1970, 2020, by = 10)) +
     scale_y_continuous(limits = c(-0.3, 1.4),
                        breaks = c(-0.2, 0.5, 1.3),
                        labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
@@ -187,10 +190,11 @@ generation_plot <- function(gen_highlight){
       title = generations_labels[gen_highlight]
     ) +
     scale_shape_manual(
-      values = c("dichotomous" = 16, "point4" = 18),
+      values = c("dichotomous" = 16, "point4" = 18, "point5" = 18),
       labels = c(
         "dichotomous" = "Dichotomous",
-        "point4" = "Likert")
+        "point4" = "Likert",
+        "point5" = "Likert")
     ) +
     theme(plot.title = element_text(hjust = 0.5, size = 20))
   for (year in break_years) {

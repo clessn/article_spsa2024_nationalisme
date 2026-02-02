@@ -28,7 +28,7 @@ plot_data <- did_results %>%
     sig_cat = factor(sig_cat, levels = c("p < 0.05", "p < 0.10", "p >= 0.10")),
     # Ordonner événements chronologiquement
     event_name = factor(event_name, levels = rev(c(
-      "Referendum 1980", "Meech Lake 1990", "Referendum 1995",
+      "PQ Election 1976", "Referendum 1980", "Meech Lake 1990", "Referendum 1995",
       "Sponsorship 2005", "Placebo 2012", "Placebo 2020"
     ))),
     # Ordonner générations

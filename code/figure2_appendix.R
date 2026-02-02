@@ -35,6 +35,14 @@ Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
 
 # Define events
 events <- list(
+  pq_1976 = list(
+    name = "PQ Election 1976",
+    year = 1976,
+    pre_years = c(1968, 1974),
+    post_years = c(1979),  # Only 1979 to avoid contamination from 1980 referendum
+    generations = c("preboomer"),  # Only preboomers have sufficient N in early surveys
+    type = "treatment"
+  ),
   ref_1980 = list(
     name = "Referendum 1980",
     year = 1980,
@@ -110,11 +118,37 @@ run_did_full <- function(event, data) {
     data = data_event
   )
 
-  model <- svyglm(iss_souv ~ post_event * generation + ses_lang.1, design = des)
+  # Check if we have multiple generations (need contrast for interaction)
+  n_generations <- length(unique(data_event$generation))
 
-  gen_effects <- avg_slopes(model, variables = "post_event", by = "generation") %>%
-    as.data.frame() %>%
-    select(generation, estimate, std.error, p.value, conf.low, conf.high) %>%
+  if (n_generations > 1) {
+    # Multiple generations: use interaction model
+    model <- svyglm(iss_souv ~ post_event * generation + ses_lang.1, design = des)
+
+    gen_effects <- avg_slopes(model, variables = "post_event", by = "generation") %>%
+      as.data.frame() %>%
+      select(generation, estimate, std.error, p.value, conf.low, conf.high)
+  } else {
+    # Single generation: use simpler model without interaction
+    model <- svyglm(iss_souv ~ post_event + ses_lang.1, design = des)
+
+    # Extract post_event effect manually
+    model_tidy <- tidy(model) %>%
+      filter(term == "post_event")
+
+    # Calculate CI and p-value manually using normal approximation (svyglm uses z-test)
+    z_stat <- model_tidy$estimate / model_tidy$std.error
+    gen_effects <- data.frame(
+      generation = unique(data_event$generation),
+      estimate = model_tidy$estimate,
+      std.error = model_tidy$std.error,
+      p.value = 2 * pnorm(-abs(z_stat)),
+      conf.low = model_tidy$estimate - 1.96 * model_tidy$std.error,
+      conf.high = model_tidy$estimate + 1.96 * model_tidy$std.error
+    )
+  }
+
+  gen_effects <- gen_effects %>%
     mutate(
       event_name = event$name,
       event_year = event$year,
@@ -175,7 +209,14 @@ run_event_study <- function(event, data) {
     data = data_event
   )
 
-  model <- svyglm(iss_souv ~ event_time_f + generation + ses_lang.1, design = des)
+  # Check if we have multiple generations
+  n_generations <- length(unique(data_event$generation))
+
+  if (n_generations > 1) {
+    model <- svyglm(iss_souv ~ event_time_f + generation + ses_lang.1, design = des)
+  } else {
+    model <- svyglm(iss_souv ~ event_time_f + ses_lang.1, design = des)
+  }
 
   coefs <- tidy(model) %>%
     filter(grepl("^event_time_f", term)) %>%
@@ -347,13 +388,13 @@ latex <- c(latex, "\\centering")
 latex <- c(latex, "\\caption{Difference-in-Differences: Post-Event Effects by Generation}")
 latex <- c(latex, "\\label{tab:appendixD_did_effects}")
 latex <- c(latex, "\\small")
-latex <- c(latex, "\\begin{tabular}{llcccc}")
+latex <- c(latex, "\\begin{tabular}{llccccc}")
 latex <- c(latex, "\\hline")
-latex <- c(latex, "\\textbf{Event} & \\textbf{Type} & \\textbf{Generation} & \\textbf{Effect} & \\textbf{SE} & \\textbf{N} \\\\")
+latex <- c(latex, "\\textbf{Event} & \\textbf{Type} & \\textbf{Generation} & \\textbf{Effect} & \\textbf{SE} & \\textbf{p} & \\textbf{N} \\\\")
 latex <- c(latex, "\\hline")
 
 # Order events properly
-event_order <- c("Referendum 1980", "Meech Lake 1990", "Referendum 1995", "Sponsorship 2005", "Placebo 2012", "Placebo 2020")
+event_order <- c("PQ Election 1976", "Referendum 1980", "Meech Lake 1990", "Referendum 1995", "Sponsorship 2005", "Placebo 2012", "Placebo 2020")
 gen_table <- gen_table %>%
   mutate(event_name = factor(event_name, levels = event_order)) %>%
   arrange(event_name, generation)
@@ -365,6 +406,7 @@ for (i in 1:nrow(gen_table)) {
                     sprintf("$-$%.3f%s", abs(row$estimate), row$sig),
                     sprintf("%.3f%s", row$estimate, row$sig))
   se_fmt <- sprintf("(%.3f)", row$std.error)
+  p_fmt <- ifelse(row$p.value < 0.001, "$<$0.001", sprintf("%.3f", row$p.value))
 
   if (as.character(row$event_name) != current_event) {
     if (current_event != "") {
@@ -372,17 +414,17 @@ for (i in 1:nrow(gen_table)) {
     }
     current_event <- as.character(row$event_name)
     n_fmt <- format(row$n_total, big.mark = ",")
-    latex <- c(latex, sprintf("%s & %s & %s & %s & %s & %s \\\\",
+    latex <- c(latex, sprintf("%s & %s & %s & %s & %s & %s & %s \\\\",
                               row$event_name, row$event_type, row$generation,
-                              est_fmt, se_fmt, n_fmt))
+                              est_fmt, se_fmt, p_fmt, n_fmt))
   } else {
-    latex <- c(latex, sprintf(" & & %s & %s & %s & \\\\",
-                              row$generation, est_fmt, se_fmt))
+    latex <- c(latex, sprintf(" & & %s & %s & %s & %s & \\\\",
+                              row$generation, est_fmt, se_fmt, p_fmt))
   }
 }
 
 latex <- c(latex, "\\hline")
-latex <- c(latex, "\\multicolumn{6}{p{12cm}}{\\footnotesize\\textit{Note:} Effects represent the average change in independence support (0-1 scale) after the event, by generation. Estimated via marginal effects from survey-weighted DiD model with generation interaction and standard errors clustered by survey year. $^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$.} \\\\")
+latex <- c(latex, "\\multicolumn{7}{p{12cm}}{\\footnotesize\\textit{Note:} Effects represent the average change in independence support (0-1 scale) after the event, by generation. Estimated via marginal effects from survey-weighted DiD model with generation interaction and standard errors clustered by survey year. $^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$.} \\\\")
 latex <- c(latex, "\\end{tabular}")
 latex <- c(latex, "\\end{table}")
 latex <- c(latex, "")
