@@ -56,8 +56,9 @@ data_1995 <- prepare_dv(data_1995)
 data_1997 <- prepare_dv(data_1997)
 
 # Model data - separate for with/without controls to maximize N
+# Note: source_id used for clustering since all data is from 2022 (single year)
 model_data_no_controls_1992 <- data_1992 |>
-  select(attitude_strength, generation, iss_idcan, year, weight_trimmed) |>
+  select(attitude_strength, generation, iss_idcan, source_id, weight_trimmed) |>
   tidyr::drop_na()
 
 model_data_with_controls_1992 <- data_1992 |>
@@ -65,7 +66,7 @@ model_data_with_controls_1992 <- data_1992 |>
     attitude_strength, generation, iss_idcan,
     ses_lang.1, ses_gender, ses_family_income_centile_cat,
     ses_origin_from_canada.1, ses_educ,
-    year, weight_trimmed
+    source_id, weight_trimmed
   ) |>
   tidyr::drop_na()
 
@@ -74,7 +75,7 @@ model_data_with_controls_1995 <- data_1995 |>
     attitude_strength, generation, iss_idcan,
     ses_lang.1, ses_gender, ses_family_income_centile_cat,
     ses_origin_from_canada.1, ses_educ,
-    year, weight_trimmed
+    source_id, weight_trimmed
   ) |>
   tidyr::drop_na()
 
@@ -83,33 +84,33 @@ model_data_with_controls_1997 <- data_1997 |>
     attitude_strength, generation, iss_idcan,
     ses_lang.1, ses_gender, ses_family_income_centile_cat,
     ses_origin_from_canada.1, ses_educ,
-    year, weight_trimmed
+    source_id, weight_trimmed
   ) |>
   tidyr::drop_na()
 
 # Models ------------------------------------------------------------------
 
-# Survey designs with clustering by year
+# Survey designs with clustering by source_id (month) since all data is from 2022
 des_no_controls_1992 <- svydesign(
-  ids = ~year,
+  ids = ~source_id,
   weights = ~weight_trimmed,
   data = model_data_no_controls_1992
 )
 
 des_with_controls_1992 <- svydesign(
-  ids = ~year,
+  ids = ~source_id,
   weights = ~weight_trimmed,
   data = model_data_with_controls_1992
 )
 
 des_with_controls_1995 <- svydesign(
-  ids = ~year,
+  ids = ~source_id,
   weights = ~weight_trimmed,
   data = model_data_with_controls_1995
 )
 
 des_with_controls_1997 <- svydesign(
-  ids = ~year,
+  ids = ~source_id,
   weights = ~weight_trimmed,
   data = model_data_with_controls_1997
 )
@@ -122,10 +123,10 @@ model_no_controls <- svyglm(
 )
 
 # Model 2: With controls (Gen Z = 1992+)
+# Note: No year FE since all data is from 2022
 model_with_controls_1992 <- svyglm(
   attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ +
-    factor(year),
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
   design = des_with_controls_1992,
   family = quasibinomial()
 )
@@ -133,8 +134,7 @@ model_with_controls_1992 <- svyglm(
 # Model 3: With controls (Gen Z = 1995+) - Robustness check
 model_with_controls_1995 <- svyglm(
   attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ +
-    factor(year),
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
   design = des_with_controls_1995,
   family = quasibinomial()
 )
@@ -142,8 +142,7 @@ model_with_controls_1995 <- svyglm(
 # Model 4: With controls (Gen Z = 1997+) - Robustness check (Pew definition)
 model_with_controls_1997 <- svyglm(
   attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ +
-    factor(year),
+    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
   design = des_with_controls_1997,
   family = quasibinomial()
 )
@@ -232,13 +231,13 @@ df_gof <- df_raw |>
   filter(part == "gof") |>
   select(term, `1992+ (no controls)`, `1992+`, `1995+`, `1997+`)
 
-# Add FE indicators
+# Add FE indicators (no year FE since all data from 2022)
 df_fe <- tibble(
   term = c("Year FE"),
   `1992+ (no controls)` = c("No"),
-  `1992+` = c("Yes"),
-  `1995+` = c("Yes"),
-  `1997+` = c("Yes")
+  `1992+` = c("No"),
+  `1995+` = c("No"),
+  `1997+` = c("No")
 )
 
 # Combine
@@ -256,7 +255,7 @@ tab_latex <- kableExtra::kbl(
   kableExtra::kable_styling(latex_options = c("hold_position", "scale_down")) |>
   kableExtra::add_header_above(c(" " = 1, " " = 1, "With controls" = 3)) |>
   kableExtra::footnote(
-    general = "Logistic regression (quasibinomial). Survey-weighted with standard errors clustered by survey year.",
+    general = "Logistic regression (quasibinomial). Survey-weighted with standard errors clustered by survey month. Data from Synopsis Jan-Jun 2022.",
     general_title = "Note: ",
     footnote_as_chunk = TRUE,
     threeparttable = TRUE
