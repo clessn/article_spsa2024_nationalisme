@@ -8,6 +8,7 @@ library(dplyr)
 library(broom)
 library(marginaleffects)
 library(lme4)
+library(survey)  # for svyglm with proper weighting and clustering
 
 # Output directory
 output_dir <- "SharedFolder_spsa_article_nationalisme/tables/appendix"
@@ -96,12 +97,20 @@ run_did_full <- function(event, data) {
     filter(generation %in% event$generations) %>%
     filter(!is.na(iss_souv)) %>%
     filter(!is.na(ses_lang.1)) %>%
+    filter(!is.na(weight_trimmed)) %>%
     mutate(post_event = as.numeric(year > event$year))
 
   n_pre <- sum(data_event$post_event == 0)
   n_post <- sum(data_event$post_event == 1)
 
-  model <- lm(iss_souv ~ post_event * generation + ses_lang.1, data = data_event, weights = weight_trimmed)
+  # Create survey design with clustering by year
+  des <- svydesign(
+    ids = ~year,
+    weights = ~weight_trimmed,
+    data = data_event
+  )
+
+  model <- svyglm(iss_souv ~ post_event * generation + ses_lang.1, design = des)
 
   gen_effects <- avg_slopes(model, variables = "post_event", by = "generation") %>%
     as.data.frame() %>%
@@ -146,6 +155,7 @@ run_event_study <- function(event, data) {
     filter(generation %in% event$generations) %>%
     filter(!is.na(iss_souv)) %>%
     filter(!is.na(ses_lang.1)) %>%
+    filter(!is.na(weight_trimmed)) %>%
     mutate(
       event_time = year - event$year,
       event_time_f = factor(event_time)
@@ -158,7 +168,14 @@ run_event_study <- function(event, data) {
   ref_time <- ref_year - event$year
   data_event$event_time_f <- relevel(data_event$event_time_f, ref = as.character(ref_time))
 
-  model <- lm(iss_souv ~ event_time_f + generation + ses_lang.1, data = data_event, weights = weight_trimmed)
+  # Create survey design with clustering by year
+  des <- svydesign(
+    ids = ~year,
+    weights = ~weight_trimmed,
+    data = data_event
+  )
+
+  model <- svyglm(iss_souv ~ event_time_f + generation + ses_lang.1, design = des)
 
   coefs <- tidy(model, conf.int = TRUE) %>%
     filter(grepl("^event_time_f", term)) %>%
@@ -360,7 +377,7 @@ for (i in 1:nrow(gen_table)) {
 }
 
 latex <- c(latex, "\\hline")
-latex <- c(latex, "\\multicolumn{6}{p{12cm}}{\\footnotesize\\textit{Note:} Effects represent the average change in independence support (0-1 scale) after the event, by generation. Estimated via marginal effects from DiD model with generation interaction. $^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$.} \\\\")
+latex <- c(latex, "\\multicolumn{6}{p{12cm}}{\\footnotesize\\textit{Note:} Effects represent the average change in independence support (0-1 scale) after the event, by generation. Estimated via marginal effects from survey-weighted DiD model with generation interaction and standard errors clustered by survey year. $^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$.} \\\\")
 latex <- c(latex, "\\end{tabular}")
 latex <- c(latex, "\\end{table}")
 latex <- c(latex, "")

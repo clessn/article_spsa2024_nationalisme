@@ -4,6 +4,7 @@
 # Packages ----------------------------------------------------------------
 library(dplyr)
 library(ggplot2)
+library(survey)  # for svyglm with proper weighting and clustering
 
 # Data -------------------------------------------------------------------
 data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
@@ -41,17 +42,29 @@ model_data <- data |>
     ses_family_income_centile_cat,
     ses_origin_from_canada.1,
     ses_educ, iss_idcan,
+    source_id,
     weight_trimmed
   ) |>
   tidyr::drop_na()
 
-model <- glm(
-  attitude_strength ~ generation * iss_idcan + ses_lang.1 + ses_gender +
-    ses_family_income_centile_cat + ses_origin_from_canada.1 + ses_educ,
-  data = model_data,
-  family = binomial(),
-  weights = weight_trimmed
+# Create survey design with clustering by source (survey month)
+# Note: year FE not included as data is from 2022 only (Synopsis months)
+des <- svydesign(
+  ids = ~source_id,  # cluster by survey month
+  weights = ~weight_trimmed,
+  data = model_data
 )
+
+model <- svyglm(
+  attitude_strength ~ generation * iss_idcan +
+    ses_lang.1 + ses_gender + ses_family_income_centile_cat +
+    ses_origin_from_canada.1 + ses_educ +
+    factor(source_id),
+  design = des,
+  family = quasibinomial()
+)
+
+n_obs <- nobs(model)
 
 # Graph ------------------------------------------------------------------
 
@@ -63,7 +76,7 @@ preds <- marginaleffects::predictions(
     generation = c("preboomer", "boomer", "x", "y", "z"),
     iss_idcan = c(0, 1)
   )
-) |> 
+) |>
   mutate(
     generation = factor(
       generation,
@@ -102,10 +115,10 @@ ggplot(
         "Canadian\nbefore\n" = 22
       )
     ) +
-    clessnverse::theme_clean_light() +
+    clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = paste0("Predicted probability of having an extreme position on the independence scale with interaction between generation and national primary identification\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2022, n = ", nrow(model$model), ".")
+      caption = paste0("Predicted probability of having an extreme position on the independence scale with interaction between generation and national primary identification\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2022, n = ", n_obs, ".")
     ) +
     scale_y_continuous(
       limits = c(0, 1),
@@ -115,7 +128,7 @@ ggplot(
     ) +
     guides(
       color = "none",
-      shape = guide_legend(title = "National Primary\nIdentification") 
+      shape = guide_legend(title = "National Primary\nIdentification")
     ) +
     theme(
       panel.grid.major.y = element_line(linewidth = 0.2, color = "grey90"),

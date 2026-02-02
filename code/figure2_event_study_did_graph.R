@@ -6,7 +6,7 @@
 
 library(dplyr)
 library(ggplot2)
-library(clessnverse)
+library(clessnize)
 
 # 1. CHARGER RÉSULTATS ---------------------------------------------------------
 
