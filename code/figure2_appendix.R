@@ -424,7 +424,7 @@ for (i in 1:nrow(gen_table)) {
 }
 
 latex <- c(latex, "\\hline")
-latex <- c(latex, "\\multicolumn{7}{p{12cm}}{\\footnotesize\\textit{Note:} Effects represent the average change in independence support (0-1 scale) after the event, by generation. Estimated via marginal effects from survey-weighted DiD model with generation interaction and standard errors clustered by survey year. $^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$.} \\\\")
+latex <- c(latex, "\\multicolumn{7}{p{13cm}}{\\footnotesize\\textit{Note:} Effects represent the average change in independence support (0-1 scale) after the event, by generation. Estimated via marginal effects from survey-weighted DiD model with generation interaction and standard errors clustered by survey year. $^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$.} \\\\")
 latex <- c(latex, "\\end{tabular}")
 latex <- c(latex, "\\end{table}")
 latex <- c(latex, "")
