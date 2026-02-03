@@ -5,7 +5,8 @@ library(dplyr)
 library(tidyr)
 
 # Data --------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds")
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") |> 
+  filter(year != 1965)
 
 # Core variables: sovereignty (DV), age, gender, language
 # These are the minimum variables needed for most analyses
