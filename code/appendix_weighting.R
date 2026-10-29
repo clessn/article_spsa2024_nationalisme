@@ -10,7 +10,7 @@ library(kableExtra)
 # LOAD DATA AND COMPUTE STATISTICS
 # =============================================================================
 
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds")
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v3_published.rds")
 
 # ESS summary by year
 ess_table <- data %>%

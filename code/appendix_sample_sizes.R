@@ -5,7 +5,7 @@ library(dplyr)
 library(tidyr)
 
 # Data --------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") |> 
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v3_published.rds") |> 
   filter(year != 1965)
 
 # Core variables: sovereignty (DV), age, gender, language

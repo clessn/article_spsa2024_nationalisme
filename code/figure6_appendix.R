@@ -15,7 +15,7 @@ options(modelsummary_factory_default = "kableExtra")
 options(knitr.table.format = "latex")
 
 # Data -------------------------------------------------------------------
-data_raw <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
+data_raw <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v3_published.rds") %>%
   filter(
     year >= 2021 &
     source_id %in% c("january", "february", "march", "april", "may", "june")

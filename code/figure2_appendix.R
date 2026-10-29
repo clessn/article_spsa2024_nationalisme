@@ -20,7 +20,7 @@ dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 message("\n========== LOADING DATA ==========\n")
 
-Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
+Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v3_published.rds") %>%
   mutate(
     yob = year - ses_age,
     generation = case_when(

@@ -5,7 +5,7 @@ library(tidyverse)
 library(patchwork)
 
 # Data --------------------------------------------------------------------
-Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
+Data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v3_published.rds") %>%
   mutate(yob = year - ses_age,
          generation = case_when(
            yob %in% 1925:1946 ~ "preboomer",
@@ -112,8 +112,8 @@ total_n <- sum(graphsData$n)
 
 ### important events
 events_df <- data.frame(
-  year = c(1976, 1980, 1990, 1995),
-  label = c("PQ Election", "Referendum", "Meech\nFailure", "Referendum")
+  year = c(1976, 1980, 1990, 1995, 2005),
+  label = c("PQ Election", "Referendum", "Meech\nFailure", "Referendum", "Sponsorship")
 )
 
 ### generations labels
@@ -141,7 +141,7 @@ calculate_age_range <- function(year, birth_start, birth_end) {
 generation_plot <- function(gen_highlight){
   graph_data <- as.data.frame(graphsData) |>
     mutate(highlight = ifelse(generation == gen_highlight, "yes", "no"))
-  lab_y <- ifelse(gen_highlight == "preboomer", "Mean Position on\nIndependentist Scale", "\n")
+  lab_y <- ifelse(gen_highlight == "preboomer", "Mean Position on\nQuebec Secession Scale", "\n")
   # Add age labels
   break_start <- min(graph_data$year[graph_data$generation == gen_highlight])
   break_start <- round(break_start / 5) * 5
@@ -183,7 +183,7 @@ generation_plot <- function(gen_highlight){
     scale_x_continuous(breaks = seq(1970, 2020, by = 10)) +
     scale_y_continuous(limits = c(-0.3, 1.4),
                        breaks = c(-0.2, 0.5, 1.3),
-                       labels = c("More\nFederalist", "Neutral", "More\nSeparatist")) +
+                       labels = c("More\nFederalist", "Neutral", "More\nSecessionist")) +
     labs(
       x = "",
       y = lab_y,
@@ -227,7 +227,7 @@ generation_plot("preboomer") +
   generation_plot("z") +
   plot_layout(design = design) +
   plot_annotation(
-    caption = paste0("Mean support for Quebec independence by generation with 95% confidence intervals.\nDiamonds indicate Likert scale questions; circles indicate dichotomous questions. n = ", total_n)
+    caption = paste0("Mean support for Quebec secession by generation with 95% confidence intervals.\nDiamonds indicate Likert scale questions; circles indicate dichotomous questions. n = ", total_n)
   ) &
   theme(plot.caption = element_text(family = "Roboto"))
 
