@@ -73,7 +73,7 @@ ggplot(plot_data, aes(x = estimate, y = event_name, alpha = sig_cat)) +
   ) +
   labs(
     y = NULL,
-    x = "\nPost-event effect on independence support\n(on scale from 0 to 1)"
+    x = "\nPost-event effect on Quebec secession support\n(on scale from 0 to 1)"
   ) +
   coord_cartesian(
     xlim = c(-0.15, 0.25)

@@ -7,7 +7,7 @@ library(ggplot2)
 library(survey)  # for svyglm with proper weighting and clustering
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v3_published.rds") %>%
   filter(
     year >= 2021 &
     source_id %in% c("january", "february", "march", "april", "may", "june")
@@ -118,13 +118,13 @@ ggplot(
     clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = paste0("Predicted probability of having an extreme position on the independence scale with interaction between generation and national primary identification\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2022, n = ", n_obs, ".")
+      caption = paste0("Predicted probability of having an extreme position on the Quebec secession scale with interaction between generation and national primary identification\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2022, n = ", n_obs, ".")
     ) +
     scale_y_continuous(
       limits = c(0, 1),
       breaks = c(0, 0.25, 0.5, 0.75, 1),
       labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)),
-      name = "Probability of Extreme Attitude\non Independentist Scale\n"
+      name = "Probability of Extreme Attitude\non Quebec Secession Scale\n"
     ) +
     guides(
       color = "none",

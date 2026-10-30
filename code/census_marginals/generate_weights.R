@@ -1,5 +1,5 @@
 ## generate_weights.R
-## Applique le raking au dataset merged_v1.rds pour créer merged_v2.rds
+## Applique le raking au dataset merged_v1.rds pour créer merged_v3_published.rds
 ##
 ## STRATÉGIE DE RAKING SÉQUENTIEL:
 ## 1. Associer chaque observation à l'année de recensement précédente la plus proche
@@ -300,6 +300,16 @@ if (!file.exists(file.path(data_dir, "merged_v1.rds"))) {
 data_raw <- readRDS(file.path(data_dir, "merged_v1.rds"))
 message(sprintf("  - merged_v1.rds: %d observations", nrow(data_raw)))
 
+# Sources exclues de l'analyse publiee: les deux sondages de 2023 et le sondage
+# nationalisme 2022, qui ne font pas partie de la serie mensuelle Leger/Synopsis.
+# L'exclusion doit se faire AVANT le raking: 2021, 2022 et 2023 partagent la meme
+# annee de recensement (2021) et sont donc rakes ensemble, si bien que retirer ces
+# sources apres coup changerait les poids de toutes les observations 2021-2022.
+EXCLUDED_SOURCES <- c("pes_elxn_2022_text", "quorum_mcq_pilote", "sondage_nationalisme_2022")
+data_raw <- data_raw %>% filter(!source_id %in% EXCLUDED_SOURCES)
+message(sprintf("  - apres exclusion de %d sources: %d observations",
+                length(EXCLUDED_SOURCES), nrow(data_raw)))
+
 if (!file.exists(marginals_path)) {
     stop(paste("Could not find marginals_all.rds at", marginals_path))
 }
@@ -506,7 +516,7 @@ if (nrow(low_eff) > 0) {
 # SAUVEGARDE
 # =============================================================================
 
-message("\n\nSaving merged_v2.rds...")
+message("\n\nSaving merged_v3_published.rds...")
 
 # Sélectionner les colonnes finales
 data_final <- data %>%
@@ -528,9 +538,9 @@ data_final <- data_final %>%
     by = "year"
   )
 
-saveRDS(data_final, file.path(data_dir, "merged_v2.rds"))
+saveRDS(data_final, file.path(data_dir, "merged_v3_published.rds"))
 
-message(sprintf("Saved: %s", file.path(data_dir, "merged_v2.rds")))
+message(sprintf("Saved: %s", file.path(data_dir, "merged_v3_published.rds")))
 
 # =============================================================================
 # RÉSUMÉ FINAL

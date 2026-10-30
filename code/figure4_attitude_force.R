@@ -8,7 +8,7 @@ library(survey)  # for svyglm with proper weighting and clustering
 library(emmeans)  # for predicted values from svyglm
 
 # Data -------------------------------------------------------------------
-data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
+data <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v3_published.rds") %>%
   filter(year >= 2021) |>
   mutate(yob = year - ses_age,
          generation = case_when(
@@ -121,13 +121,13 @@ ggplot(preds, aes(x = ses_lang.1, y = estimate, color = ses_lang.1)) +
     clessnize::theme_clean_light() +
     xlab("") +
     labs(
-      caption = paste0("Predicted probability of having an extreme position on the independence scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2023, n = ", n_obs, ".")
+      caption = paste0("Predicted probability of having an extreme position on the Quebec secession scale with interaction between generation and language\nwhile controlling for other socio-demographic variables, holding them constant. Data from 2021 to 2022, n = ", n_obs, ".")
     ) +
     scale_y_continuous(
       breaks = c(0, 0.25, 0.5, 0.75, 1),
       labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)),
       expand = c(0, 0),
-      name = "Probability of Extreme Attitude\non Independentist Scale\n"
+      name = "Probability of Extreme Attitude\non Quebec Secession Scale\n"
     ) +
     coord_cartesian(ylim = c(0, 1)) +
     guides(color = "none") +

@@ -21,7 +21,7 @@ options(knitr.table.format = "latex")
 
 # Data -------------------------------------------------------------------
 # Use all years with non-missing party ID, control for year FE
-data_raw <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v2.rds") %>%
+data_raw <- readRDS("SharedFolder_spsa_article_nationalisme/data/merged_v3_published.rds") %>%
   filter(!is.na(party_id_prov)) |>
   mutate(
     yob = year - ses_age,
