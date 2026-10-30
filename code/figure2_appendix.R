@@ -342,11 +342,14 @@ cohort_df <- data.frame(
   mutate(
     generation = factor(generation, levels = c("preboomer", "boomer", "x", "y", "z")),
     generation_label = case_when(
-      generation == "preboomer" ~ "Pre-boomer (1925--1946)",
+      # Les cohortes extremes sont ouvertes dans le modele HAPC (voir la
+      # definition de `generation` plus haut: yob <= 1946 et yob >= 1992),
+      # donc les bornes affichees doivent l'etre aussi.
+      generation == "preboomer" ~ "Pre-boomer (1946 and earlier)",
       generation == "boomer" ~ "Boomer (1947--1961)",
       generation == "x" ~ "Gen X (1962--1976)",
       generation == "y" ~ "Gen Y (1977--1991)",
-      generation == "z" ~ "Gen Z (1992--2003)"
+      generation == "z" ~ "Gen Z (1992 and later)"
     )
   ) %>%
   arrange(generation)
